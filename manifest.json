@@ -1,0 +1,11 @@
+{
+  "version": "1.1.0",
+  "distribution": "protected-runtime-prerelease",
+  "installer": "BHT-Setup-1.1.0.exe",
+  "bytes": 77471232,
+  "sha256": "136B35EC0D6AA7668D35BC4D86F5B2F312B437F50FD284449177FF07F0BDA433",
+  "source_snapshot_included": false,
+  "gui_acceptance_complete": false,
+  "known_sign_regression_failures": 11,
+  "unit_tests_passed": 428
+}
