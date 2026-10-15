@@ -1,0 +1,57 @@
+# Ket qua build
+build/
+bin/
+obj/
+*.pdb
+*.user
+*.suo
+.vs/
+# KHONG BAO GIO dua DLL cua Autodesk (hay bat ky DLL nao) vao repo
+*.dll
+*.exe
+# Du lieu khao sat / ban ve / anh that: KHONG dua vao repo
+*.dwg
+*.dwl
+*.dwl2
+*.bak
+*.sv$
+*.kmz
+*.jpg
+*.jpeg
+*.csv
+*.tsv
+data/
+# Ket qua chay kiem thu
+tests/IntegrationTests/run/
+*.console.txt
+*.log
+*.scr
+BHT_LOG*
+# Goi phat hanh (nam o release/ ngoai repo)
+*.zip
+# 5.0: ban sao phong chu (TDT / AutoCAD) chi dung cuc bo, KHONG dua vao repo
+fonts_local/
+ads_library_local/
+*.ttf
+*.shx
+
+# Temporary build output and compiled installers
+*.msi
+*.vlx
+*.fas
+*.prv
+*-latest.txt
+build-verify.txt
+
+# Local build transcripts
+/build-*.txt
+
+# Local project data and research output
+*.bht
+*.xlsx
+*.pdf
+*.err
+*.dxf
+*.png
+*.svg
+

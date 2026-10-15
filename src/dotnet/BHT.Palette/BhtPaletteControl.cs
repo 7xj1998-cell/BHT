@@ -1,0 +1,619 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.EditorInput;
+using BHT.Bridge;
+using BHT.Core;
+using AcApp = Autodesk.AutoCAD.ApplicationServices.Application;
+using Font = System.Drawing.Font;
+
+namespace BHT.Palette
+{
+    /// <summary>
+    /// Noi dung palette (WinForms, dung bang code - khong designer / XAML).
+    /// Nguyen tac: moi du lieu doc tu DWG qua BhtDataService; ghi qua AcadDispatcher
+    /// (khoa tai lieu, tu choi khi dang co lenh); thuat toan cua Lisp goi qua bht:api-*.
+    /// </summary>
+    public partial class BhtPaletteControl : UserControl
+    {
+        private Document _doc;
+        private BhtDataService _svc;
+        private readonly Timer _selTimer = new Timer();
+        private readonly Timer _probeTimer = new Timer();
+        private readonly Timer _searchTimer = new Timer();
+        private readonly long[] _pageRevisions = { -2, -2, -2, -2, -2 };
+        private bool _refreshingPage;
+        private bool _suppressSel;
+        private DateTime _suppressUntil = DateTime.MinValue;
+        private readonly CommandWatcher _watcher = new CommandWatcher();
+        private bool _lispOk, _lispRunning;
+        private int _lispGeneration;
+        private bool _probeRunning, _runtimeAttempted;
+        private LispRuntimeLoader _runtimeLoad;
+        private DateTime _runtimeDeadline;
+        private string _lispMsg = "chưa kiểm tra";
+
+        private readonly TabControl _tabs = new PaletteTheme.ThemedTabControl();
+        private readonly Label _status = new Label();
+        private readonly Label _docLabel = new Label();
+
+        public BhtPaletteControl()
+        {
+            Font = new Font("Segoe UI", 9f);
+            Dock = DockStyle.Fill;
+            _docLabel.Dock = DockStyle.Top; _docLabel.Height = 20; _docLabel.Padding = new Padding(4, 3, 0, 0);
+            _docLabel.BackColor = Color.FromArgb(45, 45, 48); _docLabel.ForeColor = Color.White;
+            _status.Dock = DockStyle.Bottom; _status.Height = 52; _status.Margin = new Padding(4);
+            _status.Padding = new Padding(7, 5, 7, 5); _status.BorderStyle = BorderStyle.FixedSingle;
+            _status.AutoEllipsis = true; _status.TabStop = false;
+            _tabs.Dock = DockStyle.Fill; _tabs.Multiline = true;
+            _tabs.TabPages.Add(BuildOverviewTab());
+            _tabs.TabPages.Add(BuildPointsTab());
+            _tabs.TabPages.Add(BuildObjectsTab());
+            _tabs.TabPages.Add(BuildPhotosTab());
+            _tabs.TabPages.Add(BuildRoutesTab());
+            _tabs.SelectedIndexChanged+=(s,e)=>{RefreshCurrentPage(false);if(_tabs.SelectedIndex==4)HighlightSelectedRoute();else ClearRouteHighlight();};
+            Controls.Add(_tabs);
+            Controls.Add(_docLabel);
+            // Retain the last message for diagnostics; no persistent footer in the palette.
+            _status.Visible = false;
+            PaletteTheme.Apply(this, _tabs, _docLabel, _status);
+            _selTimer.Interval = 300;
+            _selTimer.Tick += OnSelTimer;
+            _probeTimer.Interval = 300;
+            _probeTimer.Tick += (s, e) => { _probeTimer.Stop(); ProbeLisp(); };
+            _searchTimer.Interval = 180;
+            _searchTimer.Tick += (s,e) => { _searchTimer.Stop(); if (_svc == null) return; if (_tabs.SelectedIndex == 1) FillPointList(); else if (_tabs.SelectedIndex == 2) RefreshObjects(); };
+            _watcher.Finished += OnCommandFinished;
+            Status("Sẵn sàng.");
+        }
+
+        // ------------------------------------------------------------------ gan tai lieu
+
+        public void BindTo(Document doc)
+        {
+            if (doc == _doc && _svc != null)
+            {
+                RefreshAll();
+                if (!_lispOk)
+                {
+                    if (!_probeRunning && _runtimeLoad == null) _runtimeAttempted = false;
+                    ProbeLisp();
+                }
+                return;
+            }
+            Unbind();
+            ClearAll();
+            _doc = doc;
+            if (doc == null) { _docLabel.Text = "(không có bản vẽ)"; ClearAll(); return; }
+            try
+            {
+                _svc = new BhtDataService(doc.Database, CurrentDwgPrefix, true);
+                doc.ImpliedSelectionChanged += OnImpliedSelectionChanged;
+                _docLabel.Text = "Bản vẽ: " + SafeName(doc);
+                _lispOk = false; _lispMsg = "chưa kiểm tra";
+                RefreshAll();
+                RestoreObjectDraft(doc);
+                ProbeLisp();
+            }
+            catch (Exception ex) { StatusError("Lỗi gắn bản vẽ: " + ex.Message); }
+        }
+
+        public void Unbind(bool rememberDraft = true)
+        {
+            ClearRouteHighlight();
+            CloseSignPicker();
+            if (rememberDraft) RememberObjectDraft(_doc);
+            _lispGeneration++;
+            if (_runtimeLoad != null) { _runtimeLoad.Dispose(); _runtimeLoad = null; }
+            _probeRunning = false;
+            _runtimeAttempted = false;
+            _pendingSignFill = null;
+            _lispRunning = false;
+            _lispOk = false;
+            _selTimer.Stop();
+            _probeTimer.Stop();
+            _searchTimer.Stop();
+            for (int i = 0; i < _pageRevisions.Length; i++) _pageRevisions[i] = -2;
+            _watcher.Detach();
+            if (_doc != null) { try { _doc.ImpliedSelectionChanged -= OnImpliedSelectionChanged; } catch { } }
+            if (_svc != null) { _svc.Dispose(); _svc = null; }
+            _doc = null;
+            UpdateSignFillAvailability();
+        }
+
+        public void DocumentClosing(Document doc)
+        {
+            if (doc != null) _objectDrafts.Remove(doc);
+            if (doc != null && doc == _doc) { Unbind(false); ClearAll(); _docLabel.Text = "(bản vẽ đã đóng)"; }
+        }
+
+        private static string SafeName(Document d) { try { return System.IO.Path.GetFileName(d.Name); } catch { return "?"; } }
+
+        private string CurrentDwgPrefix()
+        {
+            try
+            {
+                if (_doc != null && _doc == AcApp.DocumentManager.MdiActiveDocument)
+                    return Convert.ToString(AcApp.GetSystemVariable("DWGPREFIX"));
+                if (_doc != null && System.IO.Path.IsPathRooted(_doc.Name))
+                    return System.IO.Path.GetDirectoryName(_doc.Name) + "\\";
+            }
+            catch { }
+            return "";
+        }
+
+        private void ClearAll()
+        {
+            _photoFilterPoint = null;
+            _points.Clear(); _owners.Clear(); _photos.Clear();
+            _ovText.Text = "";
+            _ptList.Items.Clear(); _ptDetail.Text = "";
+            _phList.Items.Clear(); ShowImage(null); _phInfo.Text = "";
+            _phObj.Items.Clear(); _phFilter.Text = "";
+            _objList.Items.Clear(); ClearObjectEditor();
+            if(routeList!=null)routeList.Items.Clear();
+            _objCount.Text = "0 / 0";
+        }
+
+        public void RefreshAll()
+        {
+            RefreshAll(true);
+        }
+
+        private void RefreshAll(bool reportStatus)
+        {
+            if (_svc == null) return;
+            RefreshCurrentPage(reportStatus);
+            if (reportStatus) Status("Đã cập nhật trang đang xem. Các trang khác sẽ đọc dữ liệu khi mở.");
+        }
+
+        private void QueueSearch()
+        {
+            // A pending filter must also refresh when returning from another tab.
+            _pageRevisions[1] = _pageRevisions[2] = -2;
+            _searchTimer.Stop(); _searchTimer.Start();
+        }
+
+        private void RefreshCurrentPage(bool force)
+        {
+            if (_svc == null || _refreshingPage || _tabs.SelectedIndex < 0) return;
+            int page = _tabs.SelectedIndex;
+            long revision = _svc.Revision;
+            if (!force && revision >= 0 && _pageRevisions[page] == revision) return;
+            _refreshingPage = true;
+            var scroll=SavePageScroll();
+            try
+            {
+                switch (page)
+                {
+                    case 0: RefreshOverview(); break;
+                    case 1: RefreshPoints(); break;
+                    case 2: RefreshObjects(); break;
+                    case 3:
+                        _points = _svc.GetPoints();
+                        _owners = ObjectLogic.OwnerMap(_svc.GetObjects());
+                        RefreshPhotos(); break;
+                    case 4: RefreshRouteData(); break;
+                }
+                _pageRevisions[page] = revision;
+            }
+            catch (Exception ex) { StatusError("Lỗi đọc dữ liệu: " + ex.Message); }
+            finally { RestorePageScroll(scroll); _refreshingPage = false; }
+        }
+
+        private Dictionary<ScrollableControl,Point> SavePageScroll()
+        {
+            var saved=new Dictionary<ScrollableControl,Point>();
+            if(_tabs.SelectedTab!=null)SaveScroll(_tabs.SelectedTab,saved);
+            return saved;
+        }
+        private static void SaveScroll(Control parent,Dictionary<ScrollableControl,Point> saved)
+        {
+            var scroll=parent as ScrollableControl;
+            if(scroll!=null&&scroll.AutoScroll)saved[scroll]=scroll.AutoScrollPosition;
+            foreach(Control child in parent.Controls)SaveScroll(child,saved);
+        }
+        private static void RestorePageScroll(Dictionary<ScrollableControl,Point> saved)
+        {
+            foreach(var pair in saved.Reverse())if(!pair.Key.IsDisposed) {
+                pair.Key.PerformLayout();
+                pair.Key.AutoScrollPosition=new Point(-pair.Value.X,-pair.Value.Y);
+            }
+        }
+
+        private void ProbeLisp()
+        {
+            if (_doc == null || _doc != AcApp.DocumentManager.MdiActiveDocument || _probeRunning) return;
+            if (_runtimeLoad != null)
+            {
+                if (DateTime.UtcNow < _runtimeDeadline) { _probeTimer.Start(); return; }
+                _runtimeLoad.Dispose(); _runtimeLoad = null;
+                _lispMsg = "Nạp lõi Lisp chưa hoàn tất hoặc đã bị hủy. Kết thúc lệnh CAD rồi mở lại BHT; xem F2 để biết chi tiết.";
+                StatusError(_lispMsg, false); RefreshOverview(); return;
+            }
+            string busy;
+            if (AcadDispatcher.IsBusy(_doc, out busy))
+            {
+                _lispMsg = "đang chờ AutoCAD kết thúc lệnh để kiểm tra lõi Lisp";
+                _probeTimer.Stop(); _probeTimer.Start(); return;
+            }
+            var probeDoc = _doc;
+            int generation = _lispGeneration;
+            _probeRunning = true;
+            AcadDispatcher.RunLisp("bht:api-version", new string[0], r => UI(() =>
+            {
+                if (_doc != probeDoc || generation != _lispGeneration) return;
+                _probeRunning = false;
+                _lispOk = r.Ok && r.Values.Count > 1 && BhtVersion.LispCompatible(r.Values[0], r.Values[1]);
+                UpdateSignFillAvailability();
+                if (_lispOk) _lispMsg = "BHT Lisp " + r.Values[0] + " đã nạp";
+                else if (r.Ok && r.Values.Count > 1)
+                    _lispMsg = "Plugin " + BhtVersion.Version + " / Lisp " + r.Values[0] +
+                        " (API " + r.Values[1] + ") không tương thích. Đóng tất cả AutoCAD rồi cài lại BHT " + BhtVersion.Version + ".";
+                else if (!_runtimeAttempted)
+                {
+                    _runtimeAttempted = true;
+                    _lispMsg = "Đang nạp lõi Lisp đi kèm BHT " + BhtVersion.Version + "...";
+                    Status(_lispMsg); RefreshOverview();
+                    _runtimeLoad = new LispRuntimeLoader(probeDoc, error => UI(() =>
+                    {
+                        if (_doc != probeDoc || generation != _lispGeneration) return;
+                        _runtimeLoad = null;
+                        if (!string.IsNullOrEmpty(error))
+                        {
+                            _probeTimer.Stop();
+                            _lispMsg = "Không nạp được lõi Lisp BHT: " + error + ". Xem dòng lệnh CAD (F2).";
+                            StatusError(_lispMsg, false); RefreshOverview();
+                        }
+                        else { _probeTimer.Stop(); _probeTimer.Start(); }
+                    }));
+                    try
+                    {
+                        _runtimeDeadline = DateTime.UtcNow.AddSeconds(30);
+                        _runtimeLoad.Start(); _probeTimer.Start(); return;
+                    }
+                    catch (Exception ex)
+                    {
+                        _runtimeLoad.Dispose(); _runtimeLoad = null;
+                        _lispMsg = "Không nạp được lõi Lisp BHT: " + ex.Message;
+                    }
+                }
+                else _lispMsg = "Lõi Lisp BHT chưa sẵn sàng: " + r.Error + ". Xem dòng lệnh CAD (F2).";
+                if (_lispOk) Status(_lispMsg); else StatusError(_lispMsg, false);
+                RefreshOverview();
+            }));
+        }
+        // ------------------------------------------------------------------ tien ich
+
+        private void WriteStatusToHistory(string message)
+        {
+            if (string.IsNullOrWhiteSpace(message)) return;
+            try { if (_doc != null) _doc.Editor.WriteMessage("\n[BHT] " + message); }
+            catch (Autodesk.AutoCAD.Runtime.Exception) { /* Document may be closing. */ }
+        }
+
+        protected void Status(string s)
+        {
+            _status.Text = s ?? "";
+            WriteStatusToHistory(s);
+            _status.BackColor = PaletteTheme.StatusBack(s);
+            _status.ForeColor = PaletteTheme.StatusFore(s);
+        }
+
+        // Errors remain in CAD command history and show one popup when requested.
+        // Thong tin thuong van dung Status(); huy lenh khong hien cua so.
+        protected void StatusError(string s) { StatusError(s, true); }
+        protected void StatusError(string s, bool popup)
+        {
+            _status.Text = s ?? "";
+            WriteStatusToHistory(s);
+            _status.BackColor = PaletteTheme.ErrorBackColor;
+            _status.ForeColor = PaletteTheme.ErrorForeColor;
+            if (popup) BhtPopup.Show(s, true);
+        }
+
+        protected void StatusWarn(string s) { StatusWarn(s, true); }
+        protected void StatusWarn(string s, bool popup)
+        {
+            _status.Text = s ?? "";
+            WriteStatusToHistory(s);
+            _status.BackColor = PaletteTheme.WarnBackColor;
+            _status.ForeColor = PaletteTheme.WarnForeColor;
+            if (popup) BhtPopup.Show(s, false);
+        }
+
+        /// <summary>Ket qua thao tac ghi: loi -> StatusError (co cua so), thanh cong -> Status.</summary>
+        protected void StatusResult(OpResult r)
+        {
+            if (r == null) return;
+            if (r.Ok) Status(r.ToString()); else StatusError(r.ToString());
+        }
+
+        protected void ShowReportDialog(string title, string content)
+        {
+            using (var dialog = new ReportDialog(title, content, Status, s => StatusError(s))) dialog.ShowDialog();
+        }
+
+        /// <summary>Dua viec ve luong giao dien, sau khi callback AutoCAD ket thuc (tranh tai nhap).</summary>
+        protected void UI(Action a)
+        {
+            if (IsDisposed) return;
+            try
+            {
+                if (IsHandleCreated) BeginInvoke(a); else a();
+            }
+            catch (Exception ex) { StatusError("Lỗi: " + ex.Message); }
+        }
+
+        private bool NeedDoc()
+        {
+            if (_doc == null || _svc == null) { Status("Không có bản vẽ đang mở."); return false; }
+            if (_doc != AcApp.DocumentManager.MdiActiveDocument) { BindTo(AcApp.DocumentManager.MdiActiveDocument); }
+            return _svc != null;
+        }
+
+        private bool NeedLisp()
+        {
+            if (!_lispOk) { StatusWarn("Lõi Lisp BHT " + BhtVersion.Version + " chưa sẵn sàng. " + _lispMsg); ProbeLisp(); return false; }
+            return true;
+        }
+
+        protected static Button Btn(string text, EventHandler h)
+        {
+            var b = new Button { Text = text, AutoSize = true, Margin = new Padding(2) };
+            b.Click += h;
+            return b;
+        }
+
+        protected static FlowLayoutPanel Flow()
+        {
+            return new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = true, Padding = new Padding(2) };
+        }
+
+        /// <summary>Goi ham Lisp; hien ket qua; lam moi du lieu khi xong (ket qua that tu Lisp, khong gia dinh).</summary>
+        private bool CallLisp(string fn, string[] args, string label, Action<LispReply> after)
+        {
+            if (_lispRunning) { Status("BHT đang xử lý thao tác trước; vui lòng chờ hoàn tất."); return false; }
+            if (!NeedDoc() || !NeedLisp()) return false;
+            var commandDoc = _doc;
+            int generation = _lispGeneration;
+            _lispRunning = true;
+            UpdateSignFillAvailability();
+            Status(label + ": đang chạy ...");
+            AcadDispatcher.RunLisp(fn, args, r => UI(() =>
+            {
+                if (_doc != commandDoc || generation != _lispGeneration) return;
+                _lispRunning = false;
+                UpdateSignFillAvailability();
+                if (r.Ok) Status(fn=="bht:api-field-input-preview" ? "Đã đọc cọc đã nhập để kiểm tra." : label + ": xong. " + string.Join("; ", r.Values.Take(8).ToArray()));
+                else StatusError(label + ": LỖI - " + r.Error);
+                if (after != null) after(r);
+                RefreshAll(false);
+            }));
+            return true;
+        }
+
+        private void SendCmd(string cmd)
+        {
+            if (!NeedDoc() || !NeedLisp()) return;
+            Action send = () =>
+            {
+                var r = AcadDispatcher.SendCommand(_doc, cmd, _watcher);
+                if (r.Ok) Status("Đang chạy " + cmd + "… Xem kết quả tại dòng lệnh CAD (F2)."); else StatusWarn(r.ToString());
+            };
+            // Bo cac dong thong bao con lai tu lenh truoc, roi moi gui lenh moi.
+            if (IsSelectionCommand(cmd)) send();
+            else AcadDispatcher.RunLisp("bht:api-messages", new[] { "DRAIN" }, r => UI(send));
+        }
+
+        private void OnCommandFinished(string cmd, string state)
+        {
+            UI(() =>
+            {
+                if (IsSelectionCommand(cmd))
+                {
+                    // EXECUTEFUNCTION used to drain Lisp messages clears PICKFIRST.
+                    // A selection command must end without starting another CAD command.
+                    Status(state == "KET_THUC" ? "Đã kết thúc lệnh chọn. Dùng COPY/MOVE; xem số lượng tại F2." : "Đã hủy lệnh chọn.");
+                    return;
+                }
+                if (!_lispOk)
+                {
+                    RefreshAll(false);
+                    Status("Lệnh " + cmd + (state == "KET_THUC" ? " đã kết thúc." : state == "HUY" ? " đã bị hủy." : " bị lỗi."));
+                    return;
+                }
+                // 0.4.6-fix3: doc loi / canh bao (bht:err / bht:warn) TRUOC khi DRAIN thong bao (DRAIN xoa ca hai).
+                AcadDispatcher.RunLisp("bht:api-problems", new[] { "DRAIN" }, pr =>
+                AcadDispatcher.RunLisp("bht:api-messages", new[] { "DRAIN" }, r => UI(() =>
+                {
+                    RefreshAll(false);
+                    string firstError = null, firstWarn = null;
+                    if (pr.Ok)
+                        foreach (string p in pr.Values)
+                        {
+                            string v = p ?? "";
+                            if (firstError == null && v.StartsWith("ERROR|", StringComparison.Ordinal)) firstError = v.Substring(6);
+                            else if (firstWarn == null && v.StartsWith("WARN|", StringComparison.Ordinal)) firstWarn = v.Substring(5);
+                        }
+                    string head = "Lệnh " + cmd + (state == "KET_THUC" ? " đã kết thúc." : state == "HUY" ? " đã bị hủy." : " bị lỗi.");
+                    string detail = r.Ok && r.Values.Count > 0 ? string.Join("\r\n", r.Values.ToArray()) : "";
+                    string upper = (cmd ?? "").ToUpperInvariant();
+                    bool report = upper.Contains("BHTKT") || upper.Contains("BHTTRANGTHAI")
+                        || upper.Contains("BHTXUAT") || upper.Contains("BHTLYTRINH") || upper.Contains("BHTKM2COC") || upper.Contains("BHTMOCKM") || detail.Length > 220 || r.Values.Count > 3;
+                    // Lisp da hien cua so cho loi nay (bht:err) -> Palette chi to mau, khong hien cua so thu hai.
+                    if (state != "HUY" && firstError != null)
+                    {
+                        head = "Lệnh " + cmd + " THẤT BẠI.";
+                        StatusError(head + " " + firstError, false);
+                    }
+                    else if (state == "LOI") StatusError(head + (detail == "" ? "" : " " + r.Values.Count + " dòng kết quả."), false);
+                    else if (state != "HUY" && firstWarn != null)
+                    {
+                        head = "Lệnh " + cmd + " kết thúc kèm cảnh báo.";
+                        StatusWarn(head + " " + firstWarn, false);
+                    }
+                    else Status(detail == "" ? head : head + " " + r.Values.Count + " dòng kết quả.");
+                    if (report && detail != "") ShowReportDialog(head, detail);
+                })));
+            });
+        }
+
+        internal static bool IsSelectionCommand(string command)
+        {
+            return string.Equals(command,"BHTCHONBAOHIEU",StringComparison.OrdinalIgnoreCase)
+                || string.Equals(command,"BHTCHONTUONGTU",StringComparison.OrdinalIgnoreCase)
+                || string.Equals(command,"BHTSELECTSIMILAR",StringComparison.OrdinalIgnoreCase);
+        }
+
+        // ------------------------------------------------------------------ dong bo lua chon
+
+        private void OnImpliedSelectionChanged(object sender, EventArgs e)
+        {
+            if (_suppressSel || DateTime.Now < _suppressUntil) return;
+            _selTimer.Stop(); _selTimer.Start(); // debounce
+        }
+
+        private void OnSelTimer(object sender, EventArgs e)
+        {
+            _selTimer.Stop();
+            if (_doc == null || _svc == null || _suppressSel || _signPicker != null) return;
+            try
+            {
+                var res = _doc.Editor.SelectImplied();
+                if (res.Status != PromptStatus.OK || res.Value == null || res.Value.Count == 0) return;
+                KeyValuePair<string, string>? hit = null;
+                using (var tr = _doc.Database.TransactionManager.StartOpenCloseTransaction())
+                {
+                    foreach (ObjectId id in res.Value.GetObjectIds())
+                    {
+                        hit = CadView.Classify(tr, id);
+                        if (hit.HasValue) break;
+                    }
+                    tr.Commit();
+                }
+                if (!hit.HasValue) return;
+                _suppressSel = true;
+                try
+                {
+                    switch (hit.Value.Key)
+                    {
+                        case "PT":
+                        case "NHAN": _tabs.SelectedTab = _tabPoints; SelectPointInList(hit.Value.Value); break;
+                        case "ANH": _tabs.SelectedTab = _tabPhotos; SelectPhoto(hit.Value.Value); break;
+                        case "KH": _tabs.SelectedTab = _tabObjects; SelectObjectInList(hit.Value.Value); break;
+                    }
+                }
+                finally { _suppressSel = false; }
+            }
+            catch (Exception ex) { Status("Đồng bộ lựa chọn: " + ex.Message); }
+        }
+
+        /// <summary>Chon + thu phong 1 thuc the trong CAD tu palette (khong gay vong lap su kien).</summary>
+        private void HighlightAndZoom(string handle, double x, double y, double viewHeight)
+        {
+            if (!NeedDoc()) return;
+            string why;
+            if (AcadDispatcher.IsBusy(_doc, out why)) { Status(why); return; }
+            try
+            {
+                using (_doc.LockDocument())
+                {
+                    CadView.ZoomTo(_doc.Editor, x, y, viewHeight);
+                    var id = string.IsNullOrEmpty(handle) ? ObjectId.Null : CadView.IdFromHandle(_doc.Database, handle);
+                    if (!id.IsNull)
+                    {
+                        _suppressSel = true;
+                        _suppressUntil = DateTime.Now.AddMilliseconds(800);
+                        try { _doc.Editor.SetImpliedSelection(new[] { id }); }
+                        finally { _suppressSel = false; }
+                    }
+                }
+                try { Autodesk.AutoCAD.Internal.Utils.SetFocusToDwgView(); } catch { }
+            }
+            catch (Exception ex) { StatusError("Thu phóng: " + ex.Message); }
+        }
+
+        /// <summary>ID diem RTK dang duoc chon trong CAD (POINT BHT_PT hoac nhan BHT_NHAN).</summary>
+        private List<string> SelectedSurveyIds()
+        {
+            var o = new List<string>();
+            if (_doc == null) return o;
+            try
+            {
+                var res = _doc.Editor.SelectImplied();
+                if (res.Status != PromptStatus.OK || res.Value == null) return o;
+                using (var tr = _doc.Database.TransactionManager.StartOpenCloseTransaction())
+                {
+                    foreach (ObjectId id in res.Value.GetObjectIds())
+                    {
+                        var c = CadView.Classify(tr, id);
+                        if (c.HasValue && (c.Value.Key == "PT" || c.Value.Key == "NHAN"))
+                        {
+                            var u = c.Value.Value.ToUpperInvariant();
+                            if (!o.Contains(u)) o.Add(u);
+                        }
+                    }
+                    tr.Commit();
+                }
+            }
+            catch (Exception ex) { Status("Đọc lựa chọn: " + ex.Message); }
+            return o;
+        }
+
+        /// <summary>
+        /// Bat dau lua chon tu Palette ma khong dong bang. Viec nhan chuot chay trong
+        /// command context cua AutoCAD; ket qua duoc tra lai UI sau khi nguoi dung Enter.
+        /// </summary>
+        private void PickSurveyPoints(Action<List<string>> done)
+        {
+            if (!NeedDoc()) return;
+            var expectedDoc = _doc;
+            var ids = new List<string>();
+            Status("Chọn POINT RTK hoặc nhãn điểm trên bản vẽ, nhấn Enter để xác nhận ...");
+            AcadDispatcher.RunInCommandContext("Chọn điểm RTK", () =>
+            {
+                var doc = AcadDispatcher.ActiveDocument;
+                if (doc == null || doc != expectedDoc) return OpResult.Fail("bản vẽ đang hoạt động đã thay đổi");
+                try { Autodesk.AutoCAD.Internal.Utils.SetFocusToDwgView(); } catch { }
+                var opt = new PromptSelectionOptions();
+                opt.MessageForAdding = "\nChọn POINT RTK hoặc nhãn điểm BHT: ";
+                opt.MessageForRemoval = "\nBỏ điểm khỏi tập chọn: ";
+                var picked = doc.Editor.GetSelection(opt);
+                if (picked.Status != PromptStatus.OK || picked.Value == null)
+                    return OpResult.Fail("đã hủy chọn điểm");
+                using (var tr = doc.Database.TransactionManager.StartOpenCloseTransaction())
+                {
+                    foreach (ObjectId id in picked.Value.GetObjectIds())
+                    {
+                        var c = CadView.Classify(tr, id);
+                        if (c.HasValue && (c.Value.Key == "PT" || c.Value.Key == "NHAN"))
+                        {
+                            string u = c.Value.Value.ToUpperInvariant();
+                            if (!ids.Contains(u)) ids.Add(u);
+                        }
+                    }
+                    tr.Commit();
+                }
+                return ids.Count > 0
+                    ? OpResult.Success("đã chọn " + ids.Count + " điểm RTK")
+                    : OpResult.Fail("tập chọn không có POINT RTK hoặc nhãn điểm BHT");
+            }, r => UI(() =>
+            {
+                Status(r.ToString());
+                if (r.Ok && done != null) done(ids);
+            }));
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing) { Unbind(false); _objectDrafts.Clear(); _selTimer.Dispose(); _probeTimer.Dispose(); _searchTimer.Dispose(); _objectTips.Dispose(); ShowImage(null); _status.Dispose(); }
+            base.Dispose(disposing);
+        }
+    }
+}
