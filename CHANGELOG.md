@@ -1,4 +1,7 @@
-﻿## 1.0.29 - 2026-10-14
+﻿## 1.0.30 - đang phát triển
+
+Công bố mã nguồn BHT theo MIT tại https://github.com/7xj1998-cell/BHT. Sửa phiên bản NuGet Microsoft.NETFramework.ReferenceAssemblies thành 1.0.3; giữ nguyên phiên bản phụ thuộc khi tăng phiên bản BHT và kiểm tra ràng buộc này trước build. Sửa nhãn mới được yêu cầu chưa hoàn tất; chưa phát hành bộ cài 1.0.30.
+## 1.0.29 - 2026-10-14
 
 Sửa bad function: 1.51086 do biến angle che hàm AutoLISP trong bố trí hàng loạt. Nhãn báo hiệu theo đoạn dẫn dài: mã/biển phụ trên, lý trình dưới; hai trụ dùng đường dẫn phía trên. Thêm BHTMAUNHAN để áp dụng cho nhãn kéo tay mà giữ hình biển. Đối chiếu sign_content theo mô hình XML hợp lệ/NFC và hiển thị văn bản; HÒA và HOÀ vẫn khác.
 
