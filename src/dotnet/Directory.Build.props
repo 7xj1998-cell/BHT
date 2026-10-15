@@ -17,6 +17,6 @@
   <!-- Chi dung khi build bang dotnet SDK (vd GitHub Actions): goi tham chieu .NET Framework 4.8
        de khong can cai .NET Framework 4.8 Developer Pack. Ban build csc.exe (scripts/build.ps1) khong dung toi. -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.30" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
   </ItemGroup>
 </Project>

@@ -17,6 +17,7 @@ foreach ($project in @('BHT.Core','BHT.Bridge','BHT.Palette')) {
 }
 $props = [xml](Get-Content -LiteralPath (Join-Path $root 'src\dotnet\Directory.Build.props') -Raw)
 Require ($props.Project.PropertyGroup.Version -eq $assemblyVersion) 'Directory.Build.props version mismatch'
+Require (@($props.Project.ItemGroup.PackageReference | Where-Object { $_.Include -eq 'Microsoft.NETFramework.ReferenceAssemblies' })[0].Version -eq '1.0.3') 'Reference assemblies NuGet version must remain 1.0.3, independent of BHT version'
 $lispPath = Join-Path $root "src\lisp\BHT-$version.lsp"
 Require (Test-Path -LiteralPath $lispPath) 'Versioned Lisp file missing'
 $lisp = Get-Content -LiteralPath $lispPath -Raw
