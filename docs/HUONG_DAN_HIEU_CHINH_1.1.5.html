@@ -1,0 +1,307 @@
+﻿<!doctype html><html lang='vi'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>BHT 1.1.5 - Layer theo tên tuyến</title><style>body{font:17px/1.65 Segoe UI,sans-serif;max-width:1060px;margin:36px auto;padding:0 24px;color:#17333c;background:#faf9f5}h1,h2{color:#155e63}h2{margin-top:32px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #b8caca;padding:10px;text-align:left;vertical-align:top}th{background:#e3eeec}code{color:#8a3d17;overflow-wrap:anywhere}a{color:#006578}@media print{body{font-size:12px;margin:0}h2{break-after:avoid}tr{break-inside:avoid}}</style><body><h1 id="bht-1.1.5-layer-theo-ten-tuyen">BHT 1.1.5 - Layer theo tên tuyến</h1>
+<p>Ngày 16/10/2026. Dành cho AutoCAD 2024. Bản này thay thế 1.1.4 để kiểm tra cục bộ và giữ các sửa lỗi phạm vi lý trình của 1.1.4.</p>
+<h2 id="ieu-gi-thay-oi">1. Điều gì thay đổi?</h2>
+<p>Tim tham chiếu của BHT được đặt trên layer <code>BHT_TUYEN_&lt;mã tuyến&gt;</code>. Ví dụ tuyến <code>DOAN_11</code> dùng <code>BHT_TUYEN_DOAN_11</code>, tuyến <code>DOAN_15</code> dùng <code>BHT_TUYEN_DOAN_15</code>.</p>
+<p>Trước đây nhiều tim cùng dùng <code>BHT_TUYEN_TDT</code>. AutoCAD thêm <code><body><h1 id="bht-1.1.5-layer-theo-ten-tuyen">BHT 1.1.5 - Layer theo tên tuyến</h1>
+<p>Ngày 16/10/2026. Dành cho AutoCAD 2024. Bản này thay thế 1.1.4 để kiểm tra cục bộ và giữ các sửa lỗi phạm vi lý trình của 1.1.4.</p>
+<h2 id="ieu-gi-thay-oi">1. Điều gì thay đổi?</h2>
+<p>Tim tham chiếu của BHT được đặt trên layer <code>BHT_TUYEN_&lt;mã tuyến&gt;</code>. Ví dụ tuyến <code>DOAN_11</code> dùng <code>BHT_TUYEN_DOAN_11</code>, tuyến <code>DOAN_15</code> dùng <code>BHT_TUYEN_DOAN_15</code>.</p>
+<p>Trước đây nhiều tim cùng dùng <code>BHT_TUYEN_TDT</code>. AutoCAD thêm <code>$0$</code> khi sao chép layer trùng tên; nạp qua nhiều đoạn làm tên dài dần. BHT 1.1.5 đưa tim tham chiếu vào layer mang mã tuyến cuối cùng sau khi xử lý trùng mã. Không lấy mã gói thay cho tên tuyến.</p>
+<p>Phạm vi thay đổi là layer của tim tham chiếu BHT. Layer nền, điểm RTK, block biển, nhãn và tài nguyên TDT gốc được giữ nguyên. Các layer cũ có thể còn hiện trong Layer Manager; phần mềm không tự xóa vì có thể chứa thực thể khác. Không dùng thay thế hàng loạt chuỗi <code>$0$</code> trong toàn bản vẽ.</p>
+<h2 id="sua-layer-trong-ban-ve-a-nap">2. Sửa layer trong bản vẽ đã nạp</h2>
+<ol>
+<li>Lưu bản vẽ bằng <strong>SAVEAS</strong> sang tên mới để kiểm tra.</li>
+<li>Cài bản 1.1.5 khi AutoCAD đã đóng. Mở lại bản sao, gõ <strong>BHT</strong> hoặc <strong>BTH</strong> và kiểm tra phiên bản trên Palette.</li>
+<li>Vào tab <strong>Tuyến &amp; báo cáo</strong>, tìm phần <strong>TIM ĐANG CHỌN</strong>.</li>
+<li>Bấm <strong>Đặt layer theo tên tuyến…</strong>. Nút này xử lý tất cả tim BHT trong bản vẽ, không chỉ dòng đang chọn.</li>
+<li>Đọc danh sách tên tuyến, layer hiện tại và layer đề nghị. Bấm <strong>Cancel</strong> nếu chưa đúng; bấm <strong>OK</strong> để áp dụng.</li>
+<li>Chọn một tim, mở Properties và kiểm tra Layer. Tắt/bật layer của tuyến đó để kiểm tra đúng tim, sau đó bật lại.</li>
+<li>Kiểm tra số hồ sơ, RTK, lý trình và trạng thái khóa trước/sau. Lưu bản sao rồi mở lại để kiểm tra.</li>
+</ol>
+<p>Đã đối chiếu trên bản sao DOAN15.bht: 9 tim, gồm DOAN_08, DOAN_09_GOI1, DOAN_10 đến DOAN_15 và TUYEN1_GOI1. BHT giữ nguyên các mã tuyến đang có; không tự suy đoán TUYEN1_GOI1 thuộc đoạn nào để đổi mã. Các tuyến có hậu tố GOI1 dùng đúng mã đó trong tên layer.</p>
+<p>Tạo tuyến, đổi tên tuyến hoặc nạp hồ sơ từ bản 1.1.5 sẽ đặt layer theo quy tắc mới. Chỉ mở Palette hoặc mở DWG không tự chuyển layer cũ. Nạp lại gói đã nạp có thể không phát sinh thay đổi; dùng nút trên để chuyển các tim cũ đã có trong bản vẽ.</p>
+<h2 id="khi-phan-mem-chan-oi-layer">3. Khi phần mềm chặn đổi layer</h2>
+<table>
+<thead>
+<tr>
+<th>Thông báo</th>
+<th>Cách xử lý</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer tim đang khóa</td>
+<td>Kiểm tra đúng layer tim trong Layer Manager. Chỉ mở khóa layer trình bày khi được phép; không mở khóa hồ sơ khảo sát.</td>
+</tr>
+<tr>
+<td>Layer đích có thuộc tính khác</td>
+<td>Đối chiếu màu, nét, độ dày, độ trong suốt, thiết lập in và trạng thái bật/tắt/đóng băng. Không đổi thuộc tính của layer đang chứa dữ liệu khác chỉ để vượt lỗi.</td>
+</tr>
+<tr>
+<td>Có thiết lập riêng trong viewport</td>
+<td>Kiểm tra bố cục in và thiết lập của từng khung nhìn; bản này giữ nguyên để tránh làm đổi bản in.</td>
+</tr>
+<tr>
+<td>Nhiều tuyến cùng tham chiếu một đường</td>
+<td>Đối chiếu liên kết tuyến trước. Một đường không thể đồng thời ở hai layer riêng.</td>
+</tr>
+<tr>
+<td>Thiếu tim hoặc tim nằm trong block/xref</td>
+<td>Khôi phục đúng liên kết hoặc tim tham chiếu thường bằng quy trình nạp tuyến hiện có. Không phá block/xref hoặc TDT gốc để ép đổi layer.</td>
+</tr>
+<tr>
+<td>Bản vẽ đã phát hành/lưu trữ</td>
+<td>Dùng bản làm việc theo quy trình quản lý bình đồ; không sửa bản đã bàn giao.</td>
+</tr>
+</tbody>
+</table>
+<p>Nếu có lỗi, việc áp dụng không được ghi một phần các tuyến. Không tạo layer mới với dấu hoặc hậu tố tùy ý để né xung đột thuộc tính.</p>
+<h2 id="bai-kiem-tra-nhanh">4. Bài kiểm tra nhanh</h2>
+<table>
+<thead>
+<tr>
+<th>Thử trên bản sao</th>
+<th>Kết quả cần thấy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chuyển 9 tim của DOAN15</td>
+<td>Mỗi tim ở layer BHT_TUYEN_ kèm đúng mã tuyến</td>
+</tr>
+<tr>
+<td>Bấm áp dụng lần hai</td>
+<td>Báo 0 tim thay đổi, không nhân bản tim</td>
+</tr>
+<tr>
+<td>Tạo tuyến TEST_LAYER</td>
+<td>Tim thuộc BHT_TUYEN_TEST_LAYER</td>
+</tr>
+<tr>
+<td>Đổi mã tuyến chưa khóa</td>
+<td>Layer theo mã mới; hồ sơ tham chiếu theo quy trình đổi tên hiện có</td>
+</tr>
+<tr>
+<td>Nạp lại cùng gói</td>
+<td>Không tăng hồ sơ, điểm hoặc nhãn</td>
+</tr>
+<tr>
+<td>Tạo layer đích khác màu trước khi nạp</td>
+<td>Báo xung đột và giữ trạng thái trước nhập</td>
+</tr>
+<tr>
+<td>Undo ngay sau chuyển layer</td>
+<td>Tim trở lại layer trước đó</td>
+</tr>
+<tr>
+<td>Lưu và mở lại bản sao</td>
+<td>Layer mới được giữ, RTK/lý trình/khóa không đổi</td>
+</tr>
+</tbody>
+</table>
+<p>Không đổi tên tuyến đã khóa chỉ để sửa tên layer. Nút chuyển layer hoạt động riêng và giữ hồ sơ đã xác nhận.</p>
+<h2 id="phuc-hoi-va-gioi-han">5. Phục hồi và giới hạn</h2>
+<p>Bấm Cancel trước áp dụng để không ghi. Sau áp dụng, dùng <strong>U</strong> ngay hoặc mở lại bản sao trước thao tác. Không nạp .bht cũ để xóa lịch sử. Bộ cài cũ được giữ trong <code>old/before-1.1.5</code>; đóng CAD trước khi đổi phiên bản phần mềm.</p>
+<p>Đã chạy AutoCAD Core Console với FAS/DLL bảo vệ: 3 kiểm tra Lisp, 18 kiểm tra layer/dữ liệu, 1 Undo; hồi quy nạp kế thừa và hiệu chỉnh đạt. File DOAN15.bht nguồn giữ nguyên SHA256. Chưa nghiệm thu thao tác chuột trong phiên AutoCAD của người dùng. 11 lỗi kiểm thử ký hiệu cũ chưa được xử lý trong đợt sửa layer này. Không coi đây là nghiệm thu toàn bộ các milestone.</p>
+<p>Hướng dẫn xử lý lý trình/hiệu chỉnh của bản trước: <a href="old/1.1.4/HUONG_DAN_HIEU_CHINH_1.1.4.md">1.1.4</a>. Bài test toàn bộ: <a href="HUONG_DAN_TEST_TOAN_BO.md">HUONG_DAN_TEST_TOAN_BO</a>.</p>
+</body>$</code> khi sao chép layer trùng tên; nạp qua nhiều đoạn làm tên dài dần. BHT 1.1.5 đưa tim tham chiếu vào layer mang mã tuyến cuối cùng sau khi xử lý trùng mã. Không lấy mã gói thay cho tên tuyến.</p>
+<p>Phạm vi thay đổi là layer của tim tham chiếu BHT. Layer nền, điểm RTK, block biển, nhãn và tài nguyên TDT gốc được giữ nguyên. Các layer cũ có thể còn hiện trong Layer Manager; phần mềm không tự xóa vì có thể chứa thực thể khác. Không dùng thay thế hàng loạt chuỗi <code><body><h1 id="bht-1.1.5-layer-theo-ten-tuyen">BHT 1.1.5 - Layer theo tên tuyến</h1>
+<p>Ngày 16/10/2026. Dành cho AutoCAD 2024. Bản này thay thế 1.1.4 để kiểm tra cục bộ và giữ các sửa lỗi phạm vi lý trình của 1.1.4.</p>
+<h2 id="ieu-gi-thay-oi">1. Điều gì thay đổi?</h2>
+<p>Tim tham chiếu của BHT được đặt trên layer <code>BHT_TUYEN_&lt;mã tuyến&gt;</code>. Ví dụ tuyến <code>DOAN_11</code> dùng <code>BHT_TUYEN_DOAN_11</code>, tuyến <code>DOAN_15</code> dùng <code>BHT_TUYEN_DOAN_15</code>.</p>
+<p>Trước đây nhiều tim cùng dùng <code>BHT_TUYEN_TDT</code>. AutoCAD thêm <code>$0$</code> khi sao chép layer trùng tên; nạp qua nhiều đoạn làm tên dài dần. BHT 1.1.5 đưa tim tham chiếu vào layer mang mã tuyến cuối cùng sau khi xử lý trùng mã. Không lấy mã gói thay cho tên tuyến.</p>
+<p>Phạm vi thay đổi là layer của tim tham chiếu BHT. Layer nền, điểm RTK, block biển, nhãn và tài nguyên TDT gốc được giữ nguyên. Các layer cũ có thể còn hiện trong Layer Manager; phần mềm không tự xóa vì có thể chứa thực thể khác. Không dùng thay thế hàng loạt chuỗi <code>$0$</code> trong toàn bản vẽ.</p>
+<h2 id="sua-layer-trong-ban-ve-a-nap">2. Sửa layer trong bản vẽ đã nạp</h2>
+<ol>
+<li>Lưu bản vẽ bằng <strong>SAVEAS</strong> sang tên mới để kiểm tra.</li>
+<li>Cài bản 1.1.5 khi AutoCAD đã đóng. Mở lại bản sao, gõ <strong>BHT</strong> hoặc <strong>BTH</strong> và kiểm tra phiên bản trên Palette.</li>
+<li>Vào tab <strong>Tuyến &amp; báo cáo</strong>, tìm phần <strong>TIM ĐANG CHỌN</strong>.</li>
+<li>Bấm <strong>Đặt layer theo tên tuyến…</strong>. Nút này xử lý tất cả tim BHT trong bản vẽ, không chỉ dòng đang chọn.</li>
+<li>Đọc danh sách tên tuyến, layer hiện tại và layer đề nghị. Bấm <strong>Cancel</strong> nếu chưa đúng; bấm <strong>OK</strong> để áp dụng.</li>
+<li>Chọn một tim, mở Properties và kiểm tra Layer. Tắt/bật layer của tuyến đó để kiểm tra đúng tim, sau đó bật lại.</li>
+<li>Kiểm tra số hồ sơ, RTK, lý trình và trạng thái khóa trước/sau. Lưu bản sao rồi mở lại để kiểm tra.</li>
+</ol>
+<p>Đã đối chiếu trên bản sao DOAN15.bht: 9 tim, gồm DOAN_08, DOAN_09_GOI1, DOAN_10 đến DOAN_15 và TUYEN1_GOI1. BHT giữ nguyên các mã tuyến đang có; không tự suy đoán TUYEN1_GOI1 thuộc đoạn nào để đổi mã. Các tuyến có hậu tố GOI1 dùng đúng mã đó trong tên layer.</p>
+<p>Tạo tuyến, đổi tên tuyến hoặc nạp hồ sơ từ bản 1.1.5 sẽ đặt layer theo quy tắc mới. Chỉ mở Palette hoặc mở DWG không tự chuyển layer cũ. Nạp lại gói đã nạp có thể không phát sinh thay đổi; dùng nút trên để chuyển các tim cũ đã có trong bản vẽ.</p>
+<h2 id="khi-phan-mem-chan-oi-layer">3. Khi phần mềm chặn đổi layer</h2>
+<table>
+<thead>
+<tr>
+<th>Thông báo</th>
+<th>Cách xử lý</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer tim đang khóa</td>
+<td>Kiểm tra đúng layer tim trong Layer Manager. Chỉ mở khóa layer trình bày khi được phép; không mở khóa hồ sơ khảo sát.</td>
+</tr>
+<tr>
+<td>Layer đích có thuộc tính khác</td>
+<td>Đối chiếu màu, nét, độ dày, độ trong suốt, thiết lập in và trạng thái bật/tắt/đóng băng. Không đổi thuộc tính của layer đang chứa dữ liệu khác chỉ để vượt lỗi.</td>
+</tr>
+<tr>
+<td>Có thiết lập riêng trong viewport</td>
+<td>Kiểm tra bố cục in và thiết lập của từng khung nhìn; bản này giữ nguyên để tránh làm đổi bản in.</td>
+</tr>
+<tr>
+<td>Nhiều tuyến cùng tham chiếu một đường</td>
+<td>Đối chiếu liên kết tuyến trước. Một đường không thể đồng thời ở hai layer riêng.</td>
+</tr>
+<tr>
+<td>Thiếu tim hoặc tim nằm trong block/xref</td>
+<td>Khôi phục đúng liên kết hoặc tim tham chiếu thường bằng quy trình nạp tuyến hiện có. Không phá block/xref hoặc TDT gốc để ép đổi layer.</td>
+</tr>
+<tr>
+<td>Bản vẽ đã phát hành/lưu trữ</td>
+<td>Dùng bản làm việc theo quy trình quản lý bình đồ; không sửa bản đã bàn giao.</td>
+</tr>
+</tbody>
+</table>
+<p>Nếu có lỗi, việc áp dụng không được ghi một phần các tuyến. Không tạo layer mới với dấu hoặc hậu tố tùy ý để né xung đột thuộc tính.</p>
+<h2 id="bai-kiem-tra-nhanh">4. Bài kiểm tra nhanh</h2>
+<table>
+<thead>
+<tr>
+<th>Thử trên bản sao</th>
+<th>Kết quả cần thấy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chuyển 9 tim của DOAN15</td>
+<td>Mỗi tim ở layer BHT_TUYEN_ kèm đúng mã tuyến</td>
+</tr>
+<tr>
+<td>Bấm áp dụng lần hai</td>
+<td>Báo 0 tim thay đổi, không nhân bản tim</td>
+</tr>
+<tr>
+<td>Tạo tuyến TEST_LAYER</td>
+<td>Tim thuộc BHT_TUYEN_TEST_LAYER</td>
+</tr>
+<tr>
+<td>Đổi mã tuyến chưa khóa</td>
+<td>Layer theo mã mới; hồ sơ tham chiếu theo quy trình đổi tên hiện có</td>
+</tr>
+<tr>
+<td>Nạp lại cùng gói</td>
+<td>Không tăng hồ sơ, điểm hoặc nhãn</td>
+</tr>
+<tr>
+<td>Tạo layer đích khác màu trước khi nạp</td>
+<td>Báo xung đột và giữ trạng thái trước nhập</td>
+</tr>
+<tr>
+<td>Undo ngay sau chuyển layer</td>
+<td>Tim trở lại layer trước đó</td>
+</tr>
+<tr>
+<td>Lưu và mở lại bản sao</td>
+<td>Layer mới được giữ, RTK/lý trình/khóa không đổi</td>
+</tr>
+</tbody>
+</table>
+<p>Không đổi tên tuyến đã khóa chỉ để sửa tên layer. Nút chuyển layer hoạt động riêng và giữ hồ sơ đã xác nhận.</p>
+<h2 id="phuc-hoi-va-gioi-han">5. Phục hồi và giới hạn</h2>
+<p>Bấm Cancel trước áp dụng để không ghi. Sau áp dụng, dùng <strong>U</strong> ngay hoặc mở lại bản sao trước thao tác. Không nạp .bht cũ để xóa lịch sử. Bộ cài cũ được giữ trong <code>old/before-1.1.5</code>; đóng CAD trước khi đổi phiên bản phần mềm.</p>
+<p>Đã chạy AutoCAD Core Console với FAS/DLL bảo vệ: 3 kiểm tra Lisp, 18 kiểm tra layer/dữ liệu, 1 Undo; hồi quy nạp kế thừa và hiệu chỉnh đạt. File DOAN15.bht nguồn giữ nguyên SHA256. Chưa nghiệm thu thao tác chuột trong phiên AutoCAD của người dùng. 11 lỗi kiểm thử ký hiệu cũ chưa được xử lý trong đợt sửa layer này. Không coi đây là nghiệm thu toàn bộ các milestone.</p>
+<p>Hướng dẫn xử lý lý trình/hiệu chỉnh của bản trước: <a href="old/1.1.4/HUONG_DAN_HIEU_CHINH_1.1.4.md">1.1.4</a>. Bài test toàn bộ: <a href="HUONG_DAN_TEST_TOAN_BO.md">HUONG_DAN_TEST_TOAN_BO</a>.</p>
+</body>$</code> trong toàn bản vẽ.</p>
+<h2 id="sua-layer-trong-ban-ve-a-nap">2. Sửa layer trong bản vẽ đã nạp</h2>
+<ol>
+<li>Lưu bản vẽ bằng <strong>SAVEAS</strong> sang tên mới để kiểm tra.</li>
+<li>Cài bản 1.1.5 khi AutoCAD đã đóng. Mở lại bản sao, gõ <strong>BHT</strong> hoặc <strong>BTH</strong> và kiểm tra phiên bản trên Palette.</li>
+<li>Vào tab <strong>Tuyến &amp; báo cáo</strong>, tìm phần <strong>TIM ĐANG CHỌN</strong>.</li>
+<li>Bấm <strong>Đặt layer theo tên tuyến…</strong>. Nút này xử lý tất cả tim BHT trong bản vẽ, không chỉ dòng đang chọn.</li>
+<li>Đọc danh sách tên tuyến, layer hiện tại và layer đề nghị. Bấm <strong>Cancel</strong> nếu chưa đúng; bấm <strong>OK</strong> để áp dụng.</li>
+<li>Chọn một tim, mở Properties và kiểm tra Layer. Tắt/bật layer của tuyến đó để kiểm tra đúng tim, sau đó bật lại.</li>
+<li>Kiểm tra số hồ sơ, RTK, lý trình và trạng thái khóa trước/sau. Lưu bản sao rồi mở lại để kiểm tra.</li>
+</ol>
+<p>Đã đối chiếu trên bản sao DOAN15.bht: 9 tim, gồm DOAN_08, DOAN_09_GOI1, DOAN_10 đến DOAN_15 và TUYEN1_GOI1. BHT giữ nguyên các mã tuyến đang có; không tự suy đoán TUYEN1_GOI1 thuộc đoạn nào để đổi mã. Các tuyến có hậu tố GOI1 dùng đúng mã đó trong tên layer.</p>
+<p>Tạo tuyến, đổi tên tuyến hoặc nạp hồ sơ từ bản 1.1.5 sẽ đặt layer theo quy tắc mới. Chỉ mở Palette hoặc mở DWG không tự chuyển layer cũ. Nạp lại gói đã nạp có thể không phát sinh thay đổi; dùng nút trên để chuyển các tim cũ đã có trong bản vẽ.</p>
+<h2 id="khi-phan-mem-chan-oi-layer">3. Khi phần mềm chặn đổi layer</h2>
+<table>
+<thead>
+<tr>
+<th>Thông báo</th>
+<th>Cách xử lý</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer tim đang khóa</td>
+<td>Kiểm tra đúng layer tim trong Layer Manager. Chỉ mở khóa layer trình bày khi được phép; không mở khóa hồ sơ khảo sát.</td>
+</tr>
+<tr>
+<td>Layer đích có thuộc tính khác</td>
+<td>Đối chiếu màu, nét, độ dày, độ trong suốt, thiết lập in và trạng thái bật/tắt/đóng băng. Không đổi thuộc tính của layer đang chứa dữ liệu khác chỉ để vượt lỗi.</td>
+</tr>
+<tr>
+<td>Có thiết lập riêng trong viewport</td>
+<td>Kiểm tra bố cục in và thiết lập của từng khung nhìn; bản này giữ nguyên để tránh làm đổi bản in.</td>
+</tr>
+<tr>
+<td>Nhiều tuyến cùng tham chiếu một đường</td>
+<td>Đối chiếu liên kết tuyến trước. Một đường không thể đồng thời ở hai layer riêng.</td>
+</tr>
+<tr>
+<td>Thiếu tim hoặc tim nằm trong block/xref</td>
+<td>Khôi phục đúng liên kết hoặc tim tham chiếu thường bằng quy trình nạp tuyến hiện có. Không phá block/xref hoặc TDT gốc để ép đổi layer.</td>
+</tr>
+<tr>
+<td>Bản vẽ đã phát hành/lưu trữ</td>
+<td>Dùng bản làm việc theo quy trình quản lý bình đồ; không sửa bản đã bàn giao.</td>
+</tr>
+</tbody>
+</table>
+<p>Nếu có lỗi, việc áp dụng không được ghi một phần các tuyến. Không tạo layer mới với dấu hoặc hậu tố tùy ý để né xung đột thuộc tính.</p>
+<h2 id="bai-kiem-tra-nhanh">4. Bài kiểm tra nhanh</h2>
+<table>
+<thead>
+<tr>
+<th>Thử trên bản sao</th>
+<th>Kết quả cần thấy</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chuyển 9 tim của DOAN15</td>
+<td>Mỗi tim ở layer BHT_TUYEN_ kèm đúng mã tuyến</td>
+</tr>
+<tr>
+<td>Bấm áp dụng lần hai</td>
+<td>Báo 0 tim thay đổi, không nhân bản tim</td>
+</tr>
+<tr>
+<td>Tạo tuyến TEST_LAYER</td>
+<td>Tim thuộc BHT_TUYEN_TEST_LAYER</td>
+</tr>
+<tr>
+<td>Đổi mã tuyến chưa khóa</td>
+<td>Layer theo mã mới; hồ sơ tham chiếu theo quy trình đổi tên hiện có</td>
+</tr>
+<tr>
+<td>Nạp lại cùng gói</td>
+<td>Không tăng hồ sơ, điểm hoặc nhãn</td>
+</tr>
+<tr>
+<td>Tạo layer đích khác màu trước khi nạp</td>
+<td>Báo xung đột và giữ trạng thái trước nhập</td>
+</tr>
+<tr>
+<td>Undo ngay sau chuyển layer</td>
+<td>Tim trở lại layer trước đó</td>
+</tr>
+<tr>
+<td>Lưu và mở lại bản sao</td>
+<td>Layer mới được giữ, RTK/lý trình/khóa không đổi</td>
+</tr>
+</tbody>
+</table>
+<p>Không đổi tên tuyến đã khóa chỉ để sửa tên layer. Nút chuyển layer hoạt động riêng và giữ hồ sơ đã xác nhận.</p>
+<h2 id="phuc-hoi-va-gioi-han">5. Phục hồi và giới hạn</h2>
+<p>Bấm Cancel trước áp dụng để không ghi. Sau áp dụng, dùng <strong>U</strong> ngay hoặc mở lại bản sao trước thao tác. Không nạp .bht cũ để xóa lịch sử. Bộ cài cũ được giữ trong <code>old/before-1.1.5</code>; đóng CAD trước khi đổi phiên bản phần mềm.</p>
+<p>Đã chạy AutoCAD Core Console với FAS/DLL bảo vệ: 4 kiểm tra Lisp, 18 kiểm tra layer/dữ liệu, 1 Undo; hồi quy nạp kế thừa và hiệu chỉnh đạt. File DOAN15.bht nguồn giữ nguyên SHA256. Chưa nghiệm thu thao tác chuột trong phiên AutoCAD của người dùng. 11 lỗi kiểm thử ký hiệu cũ chưa được xử lý trong đợt sửa layer này. Không coi đây là nghiệm thu toàn bộ các milestone.</p>
+<p>Hướng dẫn xử lý lý trình/hiệu chỉnh của bản trước: <a href="old/1.1.4/HUONG_DAN_HIEU_CHINH_1.1.4.md">1.1.4</a>. Bài test toàn bộ: <a href="HUONG_DAN_TEST_TOAN_BO.md">HUONG_DAN_TEST_TOAN_BO</a>.</p>
+</body></html>

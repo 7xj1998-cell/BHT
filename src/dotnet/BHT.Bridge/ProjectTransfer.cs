@@ -67,7 +67,7 @@ namespace BHT.Bridge {
    "field_chain_id","field_pair_a","field_pair_b","field_last_error","doan","goi","doan_ung_vien","station_point_id","station_point_method",
    "station_point_e","station_point_n","station_projection_e","station_projection_n","field_method","field_sources_signature"};
   static void ResetStation(BhtRecord record){
-   record.Set("progress_locked","0").Set("progress_state","CHUA_TINH").Set("progress_confirmed_at","").Set("progress_route_signature","").SetAll("progress_point",new string[0]);
+   record.Set("progress_locked","0").Set("progress_state","CHUA_TINH").Set("progress_confirmed_at","").Set("progress_route_signature","").Set("progress_context","").Set("progress_route_state","").SetAll("progress_point",new string[0]);
    foreach(string key in new[]{"route_id","ly_trinh_m","ly_trinh_km","doan","goi"})record.Set("import_source_"+key,record.Get(key));
    foreach(string key in DerivedKeys)record.Set(key,"");
    record.Set("station_control_eligible","0").Set("station_source","CHUA_TINH").Set("station_status","NO_ROUTE")
@@ -75,23 +75,48 @@ namespace BHT.Bridge {
    if(record.Get("sign_heading_route")!="")record.Set("sign_heading_mode","").Set("sign_heading_route","").Set("sign_heading_angle","");
    MarkerStation.Apply(record);
   }
-  static int Copy(Database source,Database target,bool allowExisting,bool keepCoordinates=false,bool surveyOnly=false,bool rolling=false,string segment=null){
+  static void TransferStep(Action<string> report,string text){if(report!=null)try{report(text);}catch{}}
+  static int Copy(Database source,Database target,bool allowExisting,bool keepCoordinates=false,bool surveyOnly=false,bool rolling=false,string segment=null,Action<string> report=null){
+   // Side databases default to disabled undo; native transaction abort then does
+   // not restore dictionary edits. Enable recording before starting the write.
+   bool disabled=!target.UndoRecording;
+   if(disabled)target.DisableUndoRecording(false);
+   try{return CopyTransaction(source,target,allowExisting,keepCoordinates,surveyOnly,rolling,segment,report);}
+   finally{if(disabled)target.DisableUndoRecording(true);}
+  }
+  static int CopyTransaction(Database source,Database target,bool allowExisting,bool keepCoordinates,bool surveyOnly,bool rolling,string segment,Action<string> report){
    using(var st=source.TransactionManager.StartOpenCloseTransaction())
    using(var tt=target.TransactionManager.StartTransaction()){
+    DrawingProject.RequireWritable(tt,target);
+    TransferStep(report,"Kiểm tra bản ghi và lịch sử nguồn/đích");
     var rows=Records(source,st);
+    rows.RemoveAll(r=>r.Sub=="DRAWING"||r.Sub=="DRAWING_VIEWS");
+    if(rows.Any(r=>r.Sub=="VIEW_LOCAL"))throw new InvalidOperationException("Nguồn có bố trí LOCAL. Lưu DWG riêng; xuất gói đồng bộ từ bình đồ GLOBAL để không phát tán vị trí riêng.");
+    BhtStore.ValidateHistory(st,source);
+    BhtStore.ValidateHistory(tt,target);
     HashSet<ObjectId> selectedIds=null;
     if(segment!=null) selectedIds=SelectSegment(source,st,ref rows,segment);
     if(surveyOnly)rows=rows.Where(r=>r.Sub!="ROUTE" && r.Sub!="FIELD_CHAIN").ToList();
+    TransferStep(report,"Đọc thực thể CAD cần nạp");
     var ids=selectedIds??Entities(source,st,rows,surveyOnly);
+    var retired=new HashSet<string>(rows.Where(r=>r.Sub=="OBJ"&&ObjectRevision.Retired(r.Record)).Select(r=>r.Key));
+    ids.RemoveWhere(id=>new[]{"BHT_KH","BHT_SIGN_ORIGIN","BHT_OFFSET_DIM"}.Any(tag=>retired.Contains(TagId((Entity)st.GetObject(id,OpenMode.ForRead),tag))));
     if(surveyOnly && !rows.Any(r=>r.Sub=="OBJ"))throw new InvalidOperationException("Tệp không có hồ sơ báo hiệu BHT để nạp.");
     if(!rows.Any(r=>r.Sub!="META") && ids.Count==0)throw new InvalidOperationException("Tệp không có dữ liệu dự án BHT; chỉ có cấu hình hoặc hình CAD thông thường.");
     // Loading BHT initializes META even in a drawing with no project data.
     // Configuration alone must not prevent the first import.
     var existing=Records(target,tt);
+    existing.RemoveAll(r=>r.Sub=="DRAWING"||r.Sub=="DRAWING_VIEWS");
+    if(rolling||surveyOnly){
+     var segmentAliases=SegmentDuplicatePolicy.NewAliasConflicts(rows.Where(r=>r.Sub=="SEG").Select(r=>r.Record.Clone().Set("segment_id",r.Key)),existing.Where(r=>r.Sub=="SEG").Select(r=>r.Record.Clone().Set("segment_id",r.Key)));
+     if(segmentAliases.Count>0)throw new ImportConflictException(segmentAliases);
+    }
+    CheckRevisionTransfer(rows,existing,surveyOnly,rolling);
     Dictionary<string,string> routeNames=null;
     if(rolling) {
+     TransferStep(report,"Đối chiếu mã hồ sơ, điểm RTK, tim và phân đoạn");
      routeNames=PrepareRolling(source,st,target,tt,ref rows,ids,existing);
-     if(!rows.Any(r=>r.Sub=="OBJ"))return 0;
+     if(!rows.Any(r=>r.Sub=="OBJ")){TransferStep(report,"Không có thay đổi; giữ nguyên bản vẽ");return 0;}
     }
     if(surveyOnly && (existing.Any(r=>r.Sub!="META" && r.Sub!="ROUTE" && r.Sub!="SEG") || rows.Any(r=>r.Sub!="SEG" && r.Sub!="META" && existing.Any(x=>x.Sub==r.Sub && x.Key==r.Key))))
       throw new InvalidOperationException("Bản vẽ đích đã có dữ liệu khảo sát BHT. Dùng bản đoạn chưa nạp báo hiệu để tránh trùng ID; giữ tim và bảng đoạn hiện có.");
@@ -101,15 +126,19 @@ namespace BHT.Bridge {
     if(source.Insunits!=target.Insunits && !adoptUnits && !keepCoordinates)throw new UnitMismatchException(source.Insunits,target.Insunits);
     var table=(BlockTable)tt.GetObject(target.BlockTableId,OpenMode.ForRead);
     var map=new IdMapping();
-    source.WblockCloneObjects(new ObjectIdCollection(ids.ToArray()),table[BlockTableRecord.ModelSpace],map,DuplicateRecordCloning.MangleName,false);
+    TransferStep(report,"Sao chép "+ids.Count+" thực thể CAD; giữ nguyên tọa độ");
+    if(ids.Count>0)source.WblockCloneObjects(new ObjectIdCollection(ids.ToArray()),table[BlockTableRecord.ModelSpace],map,DuplicateRecordCloning.MangleName,false);
+    TransferStep(report,"Khôi phục thứ tự hiển thị ký hiệu");
     var sourceTable=(BlockTable)st.GetObject(source.BlockTableId,OpenMode.ForRead);
     BhtSignLibrary.RestoreDrawOrder(st,tt,sourceTable[BlockTableRecord.ModelSpace],table[BlockTableRecord.ModelSpace],map,new HashSet<ObjectId>());
+    int written=0;
     foreach(var row in rows.OrderBy(r=>r.Sub=="OBJ"?1:0)){
+     if(written++%100==0)TransferStep(report,"Ghi hồ sơ trong giao dịch: "+written+" / "+rows.Count);
      if(surveyOnly && row.Sub=="SEG" && existing.Any(x=>x.Sub=="SEG" && x.Key==row.Key))continue;
      var record=row.Record.Clone();
      if(rolling) {
       foreach(string k in new[]{"route_id","sign_heading_route"}) { string renamed; if(routeNames.TryGetValue(record.Get(k),out renamed))record.Set(k,renamed); }
-      if(row.Sub=="OBJ")record.Set("station_control_eligible","0");
+      if(row.Sub=="OBJ"&&!ObjectRevision.Tracked(record))record.Set("station_control_eligible","0");
      }
      if(row.Sub=="ROUTE"){
       foreach(string key in new[]{"handle","tdt_source_handle"})if(record.Get(key)!="")record.Set(key,MappedHandle(source,record.Get(key),map));
@@ -138,10 +167,15 @@ namespace BHT.Bridge {
      if(!surveyOnly && !rolling && row.Sub=="META" && record.Get("symbol_road_handle")!="")record.Set("symbol_road_handle",MappedHandle(source,record.Get("symbol_road_handle"),map));
      foreach(var pair in record.Pairs.ToArray())if(!((surveyOnly || rolling) && row.Sub=="META") && (pair.Key=="custom_block" || pair.Key.StartsWith("kh_block_",StringComparison.Ordinal)))
       record.Set(pair.Key,MappedBlock(source,st,pair.Value,map));
-     BhtStore.Write(tt,target,row.Sub,row.Sub=="ROUTE" && rolling ? routeNames[row.Key] : row.Key,record);
+     if(rolling&&row.Sub=="OBJ"&&ObjectRevision.Tracked(record))BhtStore.WriteMergedRevision(tt,target,row.Key,record);
+     else BhtStore.Write(tt,target,row.Sub,row.Sub=="ROUTE" && rolling ? routeNames[row.Key] : row.Key,record);
+     // Keep clone isolation for blocks/styles; only route references get semantic layers.
+     if(row.Sub=="ROUTE")RouteLayers.ApplyOne(tt,target,rolling?routeNames[row.Key]:row.Key,record);
     }
     if(adoptUnits)target.Insunits=source.Insunits;
-    tt.Commit();return ids.Count;
+    TransferStep(report,"Kiểm tra lịch sử trước khi hoàn tất giao dịch");
+    BhtStore.ValidateHistory(tt,target);
+    tt.Commit();TransferStep(report,"Hoàn tất giao dịch");return ids.Count;
    }
   }
   public static int Export(Database source,string path){return ExportSelection(source,path,null);}

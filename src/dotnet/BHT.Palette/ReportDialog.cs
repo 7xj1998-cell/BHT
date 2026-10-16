@@ -51,20 +51,28 @@ namespace BHT.Palette
             layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             body = new TextBox { Dock = DockStyle.Fill, ReadOnly = true, Multiline = true,
-                WordWrap = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Segoe UI", 10f),
+                WordWrap = true, ScrollBars = ScrollBars.Both, Font = new Font("Segoe UI", 10f),
                 Text = content ?? "", BorderStyle = BorderStyle.None };
             var buttons = new FlowLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, FlowDirection = FlowDirection.RightToLeft, Padding = new Padding(0, 8, 0, 0) };
             var close = new Button { Text = "Đóng báo cáo", AutoSize = true, DialogResult = DialogResult.Cancel };
             close.Click += (s, e) => Close();
             var copy = new Button { Text = "Sao chép báo cáo", AutoSize = true };
+            var wrap = new CheckBox { Text = "Tự xuống dòng", Checked = true, AutoSize = true };
+            wrap.CheckedChanged += (s, e) => body.WordWrap = wrap.Checked;
+            var larger = new Button { Text = "Chữ +", AutoSize = true };
+            var smaller = new Button { Text = "Chữ −", AutoSize = true };
+            larger.Click += (s, e) => body.Font = new Font(body.Font.FontFamily, Math.Min(20f, body.Font.Size + 1f));
+            smaller.Click += (s, e) => body.Font = new Font(body.Font.FontFamily, Math.Max(8f, body.Font.Size - 1f));
+            var hint = new Label { Text = "Có thể zoom/pan trong CAD khi bảng mở.", AutoSize = true, Padding = new Padding(4, 6, 4, 4) };
             copy.Click += (s, e) => {
                 try { if (body.TextLength > 0) Clipboard.SetText(body.Text); if (copied != null) copied("Đã sao chép toàn bộ báo cáo."); }
                 catch (Exception ex) { if (failed != null) failed("Chưa sao chép được báo cáo. Thử lại. Chi tiết: " + ex.Message); }
             };
-            buttons.Controls.Add(close); buttons.Controls.Add(copy);
+            buttons.Controls.Add(close); buttons.Controls.Add(copy); buttons.Controls.Add(larger); buttons.Controls.Add(smaller); buttons.Controls.Add(wrap); buttons.Controls.Add(hint);
             layout.Controls.Add(body, 0, 0); layout.Controls.Add(buttons, 0, 1); Controls.Add(layout);
             CancelButton = close;
             PaletteTheme.ApplyDialog(this);
+            body.BackColor = Color.White; body.ForeColor = Color.FromArgb(20, 55, 43);
             Shown += (s, e) => { body.Select(0, 0); body.ScrollToCaret(); };
         }
     }

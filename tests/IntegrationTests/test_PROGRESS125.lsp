@@ -27,7 +27,7 @@
 (p125-check "legacy-bulk-calculation-preserves-confirmed10" (equal p125-a (bht:obj-read "A10")))
 (setq p125-result (vl-catch-all-apply 'bht:obj-write (list "A10" (bht:set p125-a "ly_trinh_m" "0"))))
 (p125-check "confirmed-station-cannot-be-overwritten" (and (vl-catch-all-error-p p125-result) (equal p125-a (bht:obj-read "A10"))))
-(p125-check "confirmed-segment-requires-reopen" (eq (car (bht:progress-plan "D10" "R10")) 'LOI))
+(p125-check "confirmed-segment-allows-empty-incremental-plan" (and (not (eq (car (bht:progress-plan "D10" "R10")) 'LOI)) (null (nth 2 (bht:progress-plan "D10" "R10")))))
 (bht:kh-display-transaction 'bht:progress-reopen (list "D10"))
 (p125-check "reopen-preserves-number-unlocks-only-segment" (and (not (bht:progress-locked (bht:obj-read "A10"))) (= (bht:get (bht:obj-read "A10") "ly_trinh_m") "1050.000")))
 (bht:progress-apply (bht:progress-plan "D10" "R10")) (bht:kh-display-transaction 'bht:progress-finish (list "D10"))

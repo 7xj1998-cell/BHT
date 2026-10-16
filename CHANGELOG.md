@@ -1,4 +1,63 @@
-﻿## 1.0.30 - đang phát triển
+﻿## 1.1.5 - 2026-10-16, layer tim theo tên tuyến
+
+Đặt tim tham chiếu trên BHT_TUYEN_<mã tuyến>, giữ cô lập block/style khi clone; dùng mã cuối sau xử lý trùng tuyến. Thêm nút Đặt layer theo tên tuyến trong Palette với đối chiếu trước khi ghi. Giao dịch nguyên tử, Undo; giữ hồ sơ/RTK/hình học/XData và layer gốc. Chặn layer khóa, thuộc tính xung đột và thiết lập viewport; không tự thêm hậu tố. Tương thích Line trong hồ sơ cũ.
+
+443 Core; layer 4 Lisp + 18 .NET + Undo; Progress125 13+28+7/nhãn; M2 50 đạt với runtime bảo vệ. M1 31+29/reopen, phạm vi28/reopen và layout3142 đạt trong đợt. DOAN15: 9 tim chuyển layer, canonical dữ liệu và hash nguồn giữ nguyên. Chưa nghiệm thu GUI chuột; 11 lỗi signs legacy còn tồn tại. Hướng dẫn mới HUONG_DAN_HIEU_CHINH_1.1.5; tài liệu 1.1.4 lưu old có hash. Không push.
+
+## 1.1.4 - 2026-10-16, chặn lý trình giả ở đầu/cuối tim
+
+Tái hiện 1.1.3 nhận điểm vượt đầu/cuối tim thành lý trình đầu mút và cho phép xác nhận; hồ sơ gán tay còn bỏ qua khoảng lý trình/phía đường. route-project mới kiểm tra tiếp tuyến đầu mút tim mở; giữ điểm đúng mặt cắt ranh, tim cong, đảo chiều và tim kín. Tính/xác nhận bổ sung luôn kiểm tra phạm vi/phía, kể cả gán tay. Sửa tìm tim tiếp theo khi tim đầu không có offset. Không tự sửa hồ sơ khóa hoặc RTK.
+
+Bảng hiệu chỉnh ẩn mục duyệt chưa liên quan, giải thích điều kiện còn thiếu, chỉ bật xác nhận sau preview và duyệt cần thiết. 443 Core; 28 phạm vi/Undo + reopen; M1 31+29/reopen; M2 50; UI9; grid101; hồi quy10; Progress125 13+27+7 và nhãn kế thừa đạt với FAS/DLL bảo vệ. DOAN15 nguồn giữ hash, 179 OBJ/801 RTK/108 khóa/8 khóa D11; chưa có trạng thái 10 khóa trong ảnh. Chưa nghiệm thu chuột trong CAD. Hướng dẫn mới 1.1.4, cũ ở old/1.1.3 có hash. Không push.
+
+## 1.1.3 - 2026-10-16, gom đoạn trùng có đối chiếu
+
+Đã thêm Kiểm tra / gom đoạn trùng trong bảng hiện có. Chỉ gom SEG không tham chiếu khi cùng phạm vi/phía/tên gói/cách viết mã, giữ tim, lưu snapshot đầy đủ vào SEG_ALIAS chỉ thêm, transaction và Undo. Giữ nguyên OBJ/RTK/ROUTE/CAD và hồ sơ khóa; không tự đổi mã hoặc tạo revision. Chặn mã segment khác cách viết trong nạp kế thừa/nạp khảo sát và thay bảng trước khi ghi.
+
+Tái hiện 1.1.2 nạp DOAN10 vào DOAN9 làm 15 → 30 SEG. 1.1.3 gom bản sao DOAN15 về 15, giữ 179 OBJ/801 RTK/108 khóa; DOAN08/GOI03 còn 15 khóa nên giữ mã. DOAN11/12/13 có ứng viên dùng cả hai mã bị chặn toàn bộ. Chưa thống nhất toàn bộ mã gói. 443 Core; 78+2 SEG/Undo; 16 import; 33 picker; 316 bảng; M1 31+29/reopen; M2 50; merge17; project20 đạt. GUI và lỗi đứng/proxy chưa nghiệm thu từ các kiểm tra này. Hướng dẫn mới 1.1.3, tài liệu 1.1.2 lưu old có hash. Không push.
+
+## 1.1.2 - 2026-10-16, tách bước chọn tệp kế thừa
+
+Thêm bảng chọn hồ sơ kế thừa: chọn/dán đường dẫn rồi bấm Kiểm tra và nạp; chưa đọc gói hoặc ghi DWG trong lúc chọn tệp. Dùng cửa sổ Windows không xem trước, giữ dòng lệnh/script FILEDIA=0. Nhật ký bắt đầu trước chọn tệp, ghi đóng/mở bảng, làm mới Palette và lỗi chi tiết. Sau lệnh nạp .NET, Palette không gọi Lisp DRAIN, chỉ làm mới khi lệnh đã kết thúc. Giữ chính sách xung đột/revision, giao dịch, RTK, tim và ZIP .bht.
+
+428 Core, 33 chọn tệp/lỗi/hủy/bảng, 16 import, 2 lệnh/FAS, 316 bảng, 3.102 Palette, M1 31+29/reopen và M2 50 đạt. GUI 1.1.1 không đứng khi dùng đường dẫn script; chưa xác định nguyên nhân gốc cửa sổ chọn tệp của người dùng, chưa tuyên bố sửa triệt để. Hướng dẫn mới 1.1.2; hướng dẫn 1.1.1 giữ nguyên trong docs/old/1.1.1. Build cục bộ, không push.
+
+## 1.1.1 - 2026-10-16, bảng phân đoạn và chẩn đoán nạp dữ liệu
+
+Đã thiết kế lại bảng đoạn/tim và quản lý bình đồ với chữ lớn, tương phản rõ, header xuống dòng, khung chi tiết và nút đủ chỗ. Bảng xung đột mở modeless sau khi lệnh kết thúc. Nạp tích luỹ có bước xử lý và nhật ký cục bộ; dispose bộ đệm XRecord.
+
+Đối chiếu 7 gói New: đúng cấu trúc/SHA256, mỗi gói 179 OBJ/801 RTK, kiểm tra điểm/tim xác nhận đạt. D14/D15 có hai hồ sơ khác nhau trùng OBJ-000001; giữ chặn 6 trường, không đổi nguồn/đích. 428 unit; 316 bảng; 28 import + 2 lệnh/FAS; M1 31+29/reopen; M2 50; merge17; presentation21; project20; correctiongrid101; Palette3102; regression10 đạt. Chưa tái hiện/xác định triệt để lỗi đứng GUI; không tuyên bố đã xử lý hết. 11 lỗi signs và giới hạn 1.1.0 còn được ghi nhận. Hướng dẫn mới kèm ảnh; tài liệu cũ lưu docs/old/1.1.0. Build cục bộ, không push GitHub.
+
+## 1.1.0 - 2026-10-15, bản kiểm tra báo cáo và bố trí tuyến
+
+Báo cáo giữ đủ dòng, kéo/đổi kích thước, điều chỉnh chữ và không chặn CAD; xem trước tính đoạn áp dụng bằng token kiểm tra lại dữ liệu. Chặn điểm đầu xa tim/chiều đi ra ngoài và đổi cơ sở mốc. Nhãn biển chọn hướng theo chiều tăng Km, độc lập UCS/VIEW; ghi góc tham chiếu để giữ nhãn xoay tay. Giảm quét lặp, sửa hội tụ bố trí D13 và giới hạn cọc theo tim/phạm vi, giữ khoảng lùi khi chạy lặp, đối chiếu rollback và báo nguyên nhân.
+
+428 unit; FAS/protected: 10 regression, 269 nhãn, 10 D13 + reopen canonical; M1 31 Lisp + 29 .NET; M2 50 + D10 11; M3 17; M4 21; M5 20; UI 23 + 101 + 3102, tỷ lệ API 9, thư viện đèn đạt. Bộ signs cũ còn 11 FAIL giống baseline 1.0.36, giữ nguyên bằng chứng; chưa nghiệm thu GUI/giấy phép AutoCAD. Bàn giao bộ cài để kiểm tra cục bộ, không coi toàn bộ roadmap ổn định. Hướng dẫn 1.1.0 có bài P-T và A-O, tài liệu cũ ở docs/old. Không push GitHub.
+
+## 1.0.36 - 2026-10-15, quản lý bình đồ và phát hành
+
+Thêm đăng ký danh tính bình đồ, liên kết DWG cùng dự án, kiểm tra UP_TO_DATE/UPDATE_AVAILABLE/CONFLICT, xem trước chính importer trên snapshot DWG riêng. Đồng bộ cần nguồn/đích không đổi sau preview. Thêm RELEASED/READ_ONLY_ARCHIVE, bản làm việc mới giữ ancestry, phát hành đoạn R01/R02 không ghi đè và lịch sử hash. Bảng xung đột tự giãn tiêu đề. 428 unit; protected: 20 project, 21 display, 17 merge, 50 correction, 11 D10, 101 grid; Palette layout 3097 checks; incremental 31 Lisp + 29 .NET + mở lại DWG đạt. Chưa nghiệm thu GUI/DPI đầy đủ, chưa đồng bộ trực tiếp tệp đóng hoặc đối chiếu legacy tự động.
+
+## 1.0.35 - 2026-10-15, bố trí GLOBAL/LOCAL
+
+Lưu bố trí rõ ràng sau MOVE/ROTATE, nhãn và đường dẫn; GLOBAL tăng Display Revision riêng, không sửa RTK/lý trình. LOCAL có lịch sử riêng trong DWG, nhận revision chung nhưng giữ hình riêng. Chặn bố trí tay chưa lưu và nguồn LOCAL phát tán thành GLOBAL. 21 bài trình bày protected, 17 merge và 50 correction hồi quy đạt; 428 CoreTests. Chưa tự ghi DWG khác hoặc quản lý phát hành theo đoạn.
+
+## 1.0.34 - 2026-10-15, hợp nhất revision và ngừng sử dụng
+
+Thêm hợp nhất theo project/GUID và chuỗi cha, giữ đích mới hơn, nhập lặp không đổi, báo xung đột nhánh. Luồng riêng ghi hồ sơ khóa trong transaction, giữ lịch sử và kiểm tra RTK/tim/đoạn. Bảo vệ bố trí thủ công bằng đối chiếu trước/sau. Ngừng sử dụng có revision, giữ RTK/lịch sử, loại ký hiệu và báo cáo, chặn gói cũ phục hồi. 428 unit, 17 merge/tombstone protected, 11 D10 protected, 50 correction và 101 grid đạt. Chưa có GLOBAL/LOCAL hay quản lý nhiều DWG.
+
+## 1.0.32 - 2026-10-15, kiểm tra cục bộ Milestone 2
+
+Thêm hiệu chỉnh từng hồ sơ khóa trong Palette: bốn loại thay đổi, bảng trước/sau, lý do, người sửa, duyệt baseline và chuyển đoạn. Lưu project/object identity, revision cha, snapshot SHA256 và lịch sử chỉ thêm trong DWG; không thay ZIP .bht. Tính riêng khi đổi RTK/số trụ/đoạn, giữ dữ liệu đo gốc và hồ sơ khác.
+
+Dùng nhóm Undo riêng gồm journal, dữ liệu, lịch sử và ký hiệu; lỗi hoàn tác và đối chiếu snapshot. Chặn mở lại đoạn có lịch sử, ghi ngoài quy trình và rolling/survey-only có lịch sử; full import/export giữ phiên bản. Chưa sửa mã biển nhiều mặt/nội dung tùy chỉnh, mốc Km/H ảnh hưởng tuyến, chưa merge theo ancestry hay GLOBAL/LOCAL. Hướng dẫn mới HUONG_DAN_HIEU_CHINH_1.0.32.md. Bộ cài kiểm tra trên bản sao, chưa nghiệm thu GUI. Không push GitHub.
+## 1.0.31 - 2026-10-15, build cục bộ Milestone 1
+
+Cho phép tính/xác nhận bổ sung trong đoạn có hồ sơ khóa; chỉ cập nhật hồ sơ chưa khóa, không tính lại kết quả cũ. Chặn phương án xem trước lỗi thời, kiểm tra điểm/tim/mốc/ngữ cảnh xác nhận và trả về không thay đổi khi không có hồ sơ cần ghi. Bổ sung bằng chứng ngữ cảnh vào XRecord mới, không tự nâng cấp hồ sơ cũ.
+
+Thống nhất chính sách so sánh trước nạp và thực thi; chuẩn hoá GOI01/GOI_01 có điều kiện, giữ bảo vệ phân đoạn và dùng lại tim đích đã đối chiếu. Sửa rollback khi Undo của side database tắt, xử lý danh sách clone rỗng và từ chối snapshot số không hữu hạn. Thêm kiểm thử 25+1, lỗi giữa giao dịch, Undo, nhập lặp và lưu/mở lại DWG. Chưa có hiệu chỉnh từng hồ sơ hay revision ancestry. Đóng gói bộ cài FAS/DLL 1.0.31 để người dùng kiểm tra trên AutoCAD; chưa push GitHub, chưa nghiệm thu GUI thực tế. Hướng dẫn và báo cáo mới tại docs/RELEASE_NOTES_1.0.31.md và docs/BAO_CAO_MILESTONE_1_1.0.31.md.
+
+## 1.0.30 - đang phát triển
 
 Công bố mã nguồn BHT theo MIT tại https://github.com/7xj1998-cell/BHT. Sửa phiên bản NuGet Microsoft.NETFramework.ReferenceAssemblies thành 1.0.3; giữ nguyên phiên bản phụ thuộc khi tăng phiên bản BHT và kiểm tra ràng buộc này trước build. Sửa nhãn mới được yêu cầu chưa hoàn tất; chưa phát hành bộ cài 1.0.30.
 ## 1.0.29 - 2026-10-14
@@ -826,4 +885,8 @@ Xem CHANGELOG trong các gói phát hành `release/BHT-0.3.x`.
 - Lấy vị trí cọc TDT tại vạch trên tim, tránh dùng vị trí chữ gây lệch khoảng 0,75 m. Nếu không nhận diện được vạch, giữ cách chiếu nhãn để người dùng kiểm tra.
 - Sửa lỗi `eDegenerateGeometry` khi cập nhật lại Polyline tham chiếu có cung; giữ nguyên handle, không tạo tuyến trùng.
 - Kiểm tra trên bản sao bản vẽ TDT thực tế: bản cũ đọc 0 cọc, bản mới đọc đủ 371 cọc; giữ hai cảnh báo để người dùng xét duyệt. Lưu/mở lại giữ 371 cọc đọc được và 369 mốc đã nạp trong ca thử.
+
+## 1.0.33 - 2026-10-15, sửa bảng hiệu chỉnh
+
+Sửa tiêu đề bị cắt khi font tăng theo DPI: tiêu đề và dòng tự giãn, có khoảng đệm, xuống dòng theo độ rộng. Áp dụng cho bảng nhập, đối chiếu và lịch sử. Hàng nhập liệu và thông báo tự giãn theo cửa sổ. Test tái hiện trên 1.0.32 có 30 lỗi; bản sửa đạt 101 kiểm tra bảng tại cỡ chữ 100/125/150/200%, 19 kiểm tra UI cũ và 410 CoreTests. Không đổi dữ liệu hay cơ chế nhập. Thêm hướng dẫn kiểm thử A-O và trạng thái từng milestone; chưa tuyên bố M3-M5 hoàn tất.
 

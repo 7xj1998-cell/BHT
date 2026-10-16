@@ -20,6 +20,7 @@ namespace BHT.Palette
             // de viec NETLOAD chi dang ky lenh va ham Lisp phuc vu kiem thu.
             if (PaletteCommands.IsCoreConsole()) return;
             BHT.Bridge.ProjectTransfer.ImportConflictsDetected += ShowImportConflicts;
+            BHT.Bridge.ProjectTransfer.RollingFilePicker = PickRollingFile;
             try
             {
                 var doc = AcApp.DocumentManager.MdiActiveDocument;
@@ -52,11 +53,39 @@ namespace BHT.Palette
             catch { return "ERROR"; }
         }
 
+        private static string PickRollingFile()
+        {
+            using(var form = new RollingImportFileForm())
+                return AcApp.ShowModalDialog(form) == System.Windows.Forms.DialogResult.OK ? form.SelectedPath : null;
+        }
+
         private static void ShowImportConflicts(System.Collections.Generic.IList<BHT.Core.ImportConflict> conflicts)
         {
-            using(var form=new ImportConflictForm(conflicts)) AcApp.ShowModalDialog(form);
+            // Finish the failed import command before creating its report window.
+            // No modal nested message loop inside an import/transaction error path.
+            var document = AcApp.DocumentManager.MdiActiveDocument;
+            EventHandler idle = null;
+            idle = (sender, args) => {
+                if (AcApp.DocumentManager.MdiActiveDocument == document && BHT.Bridge.AcadDispatcher.ActiveCommands(document) != "") return;
+                AcApp.Idle -= idle;
+                if (AcApp.DocumentManager.MdiActiveDocument != document) return;
+                ImportConflictForm form = null;
+                try {
+                    BHT.Bridge.RollingImportLog.Note("Tạo bảng đối chiếu sau khi lệnh kết thúc");
+                    form = new ImportConflictForm(conflicts);
+                    form.FormClosed += (s,e) => BHT.Bridge.RollingImportLog.Note("Đã đóng bảng đối chiếu");
+                    AcApp.ShowModelessDialog(form);
+                    BHT.Bridge.RollingImportLog.Note("Đã hiển thị bảng đối chiếu; bản vẽ giữ nguyên");
+                }
+                catch(System.Exception ex) {
+                    if(form!=null)form.Dispose();
+                    BHT.Bridge.RollingImportLog.Note("LỖI HIỂN THỊ BẢNG — "+ex);
+                    try { document.Editor.WriteMessage("\nKhông mở được bảng đối chiếu: "+ex.Message); } catch { }
+                }
+            };
+            AcApp.Idle += idle;
         }
-        public void Terminate() { BHT.Bridge.ProjectTransfer.ImportConflictsDetected -= ShowImportConflicts; PaletteHost.Shutdown(); }
+        public void Terminate() { BHT.Bridge.ProjectTransfer.RollingFilePicker = null; BHT.Bridge.ProjectTransfer.ImportConflictsDetected -= ShowImportConflicts; PaletteHost.Shutdown(); }
     }
 
     public class PaletteCommands

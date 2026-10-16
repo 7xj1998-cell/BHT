@@ -1,6 +1,40 @@
-﻿# BHT 1.0.30 — Hướng dẫn sử dụng
+﻿# BHT 1.1.5 — Hướng dẫn sử dụng
 
-Tài liệu ngày 14/10/2026, dành cho AutoCAD 2024 trên Windows. Gõ **BHT** hoặc **BTH** để mở bảng. Hai lệnh này mở cùng một giao diện.
+Tài liệu ngày 16/10/2026, dành cho AutoCAD 2024 trên Windows. Gõ **BHT** hoặc **BTH** để mở bảng. Hai lệnh này mở cùng một giao diện.
+
+## Layer theo tên tuyến trong 1.1.5
+
+Đọc [hướng dẫn 1.1.5](HUONG_DAN_HIEU_CHINH_1.1.5.md). Trong Tuyến & báo cáo → TIM ĐANG CHỌN, bấm Đặt layer theo tên tuyến để đối chiếu tất cả tim. Tim DOAN_11 dùng BHT_TUYEN_DOAN_11. Giữ hình học, RTK, hồ sơ khóa và layer cũ. Không tự chuyển khi mở DWG.
+
+## Phạm vi lý trình và hiệu chỉnh trong 1.1.4
+
+Đọc [hướng dẫn 1.1.4](old/1.1.4/HUONG_DAN_HIEU_CHINH_1.1.4.md). Điểm vượt đầu/cuối tim không còn nhận lý trình đầu mút; gán tay không bỏ kiểm tra phạm vi/phía đường. Bảng hiệu chỉnh hiện điều kiện còn thiếu. Không tự sửa kết quả đã khóa. OUT_OF_RANGE kèm tên tim là lần thử thất bại, không đồng nghĩa đã gán đoạn.
+
+## Bảng 30 dòng thành 15 đoạn trong 1.1.3
+
+Đọc [hướng dẫn gom đoạn trùng 1.1.3](old/1.1.3/HUONG_DAN_HIEU_CHINH_1.1.3.md). Bảng đoạn có nút Kiểm tra / gom đoạn trùng, đối chiếu và xác nhận riêng. Giữ dòng đang được hồ sơ tham chiếu; không mở khóa hay đổi OBJ/RTK/tim. DOAN15 có thể gom từ 30 xuống 15 trên bản sao; DOAN08/GOI03 giữ mã cũ. Không tự thống nhất mọi mã gói hoặc xóa cả bộ mã cũ.
+
+## Nạp kế thừa trong 1.1.2
+
+Đọc [hướng dẫn 1.1.2](old/1.1.2/HUONG_DAN_HIEU_CHINH_1.1.2.md). Chọn/dán đường dẫn rồi bấm Kiểm tra và nạp. D14/D15 vẫn chặn hai hồ sơ khác nhau trùng OBJ-000001. Chưa có bằng chứng kết luận đã sửa triệt để lỗi đứng CAD.
+
+## Bản sửa 1.1.1
+
+Đã thiết kế lại bảng phân đoạn và quản lý bình đồ, thêm nhật ký nạp và bảng xung đột không chặn CAD. Trước khi nạp DOAN14 vào đoạn 15, đọc phần đối chiếu OBJ-000001 trong hướng dẫn 1.1.1; hai hồ sơ trùng mã đang liên kết hai điểm khác nhau.
+
+## Các chức năng kế thừa 1.1.0
+
+Đọc [hướng dẫn tính năng 1.1.0](old/1.1.1/HUONG_DAN_HIEU_CHINH_1.1.1.md) và làm bài P-T trong [hướng dẫn kiểm thử](HUONG_DAN_TEST_TOAN_BO.md) trước bài A-O. Báo cáo/xem trước có thể kéo sang bên để kiểm tra CAD; báo cáo không còn bị cắt còn 40 dòng. Nhãn dùng chiều tăng Km, điểm đầu sai bị chặn, bố trí D13 và tốc độ cập nhật hàng loạt đã được sửa. [Báo cáo kiểm chứng](old/1.1.1/BAO_CAO_NGHIEM_THU_1.1.1.md) nêu cả những kiểm tra chưa đạt và giới hạn GUI.
+
+## Hiệu chỉnh riêng hồ sơ đã xác nhận (1.0.32)
+
+Chọn hồ sơ khóa trong Hồ sơ đối tượng rồi bấm **Hiệu chỉnh hồ sơ đã xác nhận…**. Đọc [hướng dẫn 1.1.0](old/1.1.1/HUONG_DAN_HIEU_CHINH_1.1.1.md), gồm xem trước, lịch sử, duyệt chuyển đoạn, GLOBAL/LOCAL và phục hồi. Tab Tuyến có quản lý bình đồ, đồng bộ và phát hành R01/R02. Chỉ kiểm tra trên bản sao theo [bài test A-O và bình đồ](HUONG_DAN_TEST_TOAN_BO.md); chưa nghiệm thu GUI đầy đủ.
+
+## Tính và xác nhận bổ sung (1.0.31)
+
+Chọn đoạn đã có hồ sơ khóa và tim đang gắn với đoạn, tính rồi xác nhận các hồ sơ mới. Hồ sơ khóa giữ nguyên; không dùng Mở lại kết quả đoạn chỉ để bổ sung. BHT kiểm tra dữ liệu điểm/tim/mốc và chặn khi thiếu bằng chứng hoặc có thay đổi ảnh hưởng kết quả cũ.
+
+Chức năng bổ sung của 1.0.31 được giữ và kiểm thử hồi quy trong 1.0.36. Tài liệu bản cũ nằm trong docs/old trên máy phát triển.
 
 ## Mẫu nhãn báo hiệu (1.0.29)
 
@@ -30,12 +64,12 @@ Chọn **Xuất dữ liệu tích lũy (.bht)** để lưu cả hồ sơ hiện 
 
 **Nạp khảo sát mới (tính lại lý trình)** đặt lại kết quả nguồn để bắt đầu phép tính theo tim đích. Quy trình tiếp tục kế thừa kết quả dùng **Nạp dữ liệu kế thừa**. Hồ sơ đã thuộc đoạn khác chưa được tự chuyển đoạn; dùng bảng **BHTGANDOAN** sau khi đối chiếu. Kết quả đã xác nhận cần mở lại trước khi chỉnh sửa.
 
-Đối với DT.830, xem [hướng dẫn và các điểm phải đối chiếu tại đoạn 10](RELEASE_NOTES_1.0.25.md). Xác nhận đoạn chỉ bảo vệ hồ sơ đã kiểm tra, không chứng minh đã khảo sát đủ mọi đối tượng ngoài thực địa.
+Đối với DT.830, xem [hướng dẫn và các điểm phải đối chiếu tại đoạn 10](old/RELEASE_NOTES_1.0.25.md). Xác nhận đoạn chỉ bảo vệ hồ sơ đã kiểm tra, không chứng minh đã khảo sát đủ mọi đối tượng ngoài thực địa.
 
 ## 1. Cài bản mới và bắt đầu
 
 1. Lưu công việc đang làm, đóng toàn bộ AutoCAD.
-2. Chạy **BHT-Setup-1.0.30.exe**, sau đó mở lại AutoCAD 2024.
+2. Chạy **BHT-Setup-1.1.5.exe**, bấm **Cài đặt BHT**, chờ hoàn tất rồi mở lại AutoCAD 2024. Bản này dành cho kiểm tra trên bản sao DWG; chưa nghiệm thu GUI thực tế.
 3. Mở bản vẽ và gõ **BHT**. Kiểm tra phiên bản bằng **BHTTRANGTHAI** hoặc **BHTNETINFO**.
 4. Khi cần thử thay đổi hàng loạt, dùng một bản sao DWG trước.
 

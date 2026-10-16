@@ -8,11 +8,18 @@ namespace BHT.Bridge
 {
     public static partial class ProjectTransfer
     {
+        static void CheckRevisionTransfer(List<Row> rows,List<Row> existing,bool surveyOnly,bool rolling)
+        {
+            if(rolling&&Versioned(rows.Concat(existing))) { RevisionDecisions(rows,existing);return; }
+            if(surveyOnly && Versioned(rows.Concat(existing)))
+                throw new ImportConflictException(new[]{new ImportConflict("Phiên bản","DỰ ÁN","Hồ sơ có lịch sử hiệu chỉnh. Chỉ nạp đầy đủ vào DWG trống cho tới khi có hợp nhất theo phiên bản.","revision_id","Giữ dữ liệu đích","Chưa nhập")});
+        }
         public static event Action<IList<ImportConflict>> ImportConflictsDetected;
 
         // Inspect the entire merge before changing destination records or presentation.
-        static void CheckRollingConflicts(List<Row> rows,List<Row> existing,List<SurveyPoint> sourcePoints,List<SurveyPoint> targetPoints)
+        static void CheckRollingConflicts(List<Row> rows,List<Row> existing,List<SurveyPoint> sourcePoints,List<SurveyPoint> targetPoints,Dictionary<string,string> reused)
         {
+            CheckRevisionTransfer(rows,existing,false,true);
             var conflicts=new List<ImportConflict>();
             var incomingPoints=sourcePoints.ToLookup(p=>p.IdUpper);
             var currentPoints=targetPoints.ToLookup(p=>p.IdUpper);
@@ -28,17 +35,21 @@ namespace BHT.Bridge
                     conflicts.Add(new ImportConflict("Điểm",id,"Cùng mã, khác tọa độ",new[]{"X","Y","Z"}[i],av[i].ToString("R",CultureInfo.InvariantCulture),bv[i].ToString("R",CultureInfo.InvariantCulture)));
             }
             var oldRows=existing.ToDictionary(r=>r.Sub+"/"+r.Key);
+            foreach(var set in new[]{existing,rows})foreach(var obj in set.Where(r=>r.Sub=="OBJ")) {
+                var seg=set.FirstOrDefault(r=>r.Sub=="SEG"&&r.Key==obj.Record.Get("doan"));
+                if(seg!=null&&obj.Record.Get("goi")!=""&&obj.Record.Get("goi")!=seg.Record.Get("package_id"))
+                    conflicts.Add(new ImportConflict("Hồ sơ",obj.Key,"Gói trong hồ sơ không khớp bảng đoạn","goi",obj.Record.Get("goi"),seg.Record.Get("package_id")));
+            }
             foreach(var row in rows) {
                 Row old;if(!oldRows.TryGetValue(row.Sub+"/"+row.Key,out old))continue;
                 if(row.Sub=="OBJ") {
-                    conflicts.AddRange(ImportConflict.Compare("Hồ sơ",row.Key,"Khác nội dung khảo sát",old.Record,row.Record,ProgressPolicy.SurveyFields));
-                    if(ProgressPolicy.Locked(old.Record)&&ProgressPolicy.Locked(row.Record))
-                        conflicts.AddRange(ImportConflict.Compare("Hồ sơ",row.Key,"Khác kết quả đã xác nhận",old.Record,row.Record,ProgressPolicy.ProtectedFields.Except(ProgressPolicy.SurveyFields).Where(k=>k!="route_id")));
+                    conflicts.AddRange(ProgressPolicy.RollingConflicts(row.Key,old.Record,row.Record));
                 } else if(row.Sub=="SEG") {
-                    conflicts.AddRange(ImportConflict.Compare("Đoạn",row.Key,"Khác phạm vi, phía hoặc gói thầu",old.Record,row.Record,new[]{"km_start_m","km_end_m","side","package_id"}));
+                    conflicts.AddRange(ImportConflict.Compare("Đoạn",row.Key,"Khác phạm vi, phía hoặc gói thầu",old.Record,row.Record,PackageAliasPolicy.SegmentFields));
                     bool importingResult=rows.Any(r=>r.Sub=="OBJ"&&ProgressPolicy.Locked(r.Record)&&r.Record.Get("doan")==row.Key&&
                         !existing.Any(e=>e.Sub=="OBJ"&&e.Key==r.Key&&ProgressPolicy.Locked(e.Record)));
-                    if(importingResult&&old.Record.Get("route_id")!="")conflicts.Add(new ImportConflict("Đoạn",row.Key,"Đích đã gán tim cho đoạn nhận kết quả","route_id",old.Record.Get("route_id"),row.Record.Get("route_id")));
+                    string bound;
+                    if(importingResult&&old.Record.Get("route_id")!=""&&(!reused.TryGetValue(row.Record.Get("route_id"),out bound)||bound!=old.Record.Get("route_id")))conflicts.Add(new ImportConflict("Đoạn",row.Key,"Đích đã gán tim khác cho đoạn nhận kết quả","route_id",old.Record.Get("route_id"),row.Record.Get("route_id")));
                 } else if(row.Sub!="META"&&row.Sub!="FIELD_CHAIN"&&row.Sub!="ROUTE"&&old.Record.ToCanonical()!=row.Record.ToCanonical()) {
                     var differences=ImportConflict.Compare(row.Sub,row.Key,"Khác dữ liệu",old.Record,row.Record,old.Record.Pairs.Select(p=>p.Key).Union(row.Record.Pairs.Select(p=>p.Key))).ToArray();
                     conflicts.AddRange(differences);

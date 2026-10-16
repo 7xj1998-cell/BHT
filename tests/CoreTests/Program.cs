@@ -15,6 +15,10 @@ namespace BHT.CoreTests
     {
         static void SurveyComparisonT()
         {
+            Progress131T();
+            Segment113Tests.Run(Check);
+            Revision132Tests.Run(Check);
+            RevisionMerge134Tests.Run(Check);
             string a="<sign-content version=\"1\"><face index=\"0\" code=\"I.419a\"><field key=\"LOCATION#0\">ĐỊA PHẬN XÃ ĐỨC HÒA</field><field key=\"STATION#0\"></field></face></sign-content>";
             string b=a.Replace("<face index=\"0\" code=\"I.419a\">","\n <face code=\"I.419a\" index=\"0\">").Replace("<field key=\"STATION#0\"></field>","<field key=\"STATION#0\" />").Normalize(System.Text.NormalizationForm.FormD);
             var x=new BhtRecord().Set("sign_content",a);var y=new BhtRecord().Set("sign_content",b);
@@ -28,6 +32,28 @@ namespace BHT.CoreTests
             Check("C129h","report human text",SurveyComparison.DescribeSignContent(a).Contains("Địa danh: ĐỊA PHẬN XÃ ĐỨC HÒA")&&!SurveyComparison.DescribeSignContent(a).Contains("<field"));
             Check("C129i","records preserved",x.Get("sign_content")==a&&y.Get("sign_content")==b);
             Check("C129j","survey numbers not normalized",!ProgressPolicy.SameSurvey(x.Clone().Set("so_tru","1"),x.Clone().Set("so_tru","2")));
+        }
+
+        static void Progress131T()
+        {
+            var a=new BhtRecord().Set("progress_locked","1").Set("doan","DOAN_08").Set("goi","GOI_01").Set("ly_trinh_m","1050.000");
+            foreach(string k in ProgressPolicy.ProtectedFields) {
+                var changed=a.Clone().Set(k,"CHANGED");
+                Check("P131-guard-"+k,"confirmed field guarded",ProgressPolicy.Changed(a,changed));
+                if(k!="route_id")Check("P131-merge-"+k,"same differences in merge report",ProgressPolicy.RollingConflicts("OBJ001",a,changed).Any(c=>c.Field==k));
+            }
+            var display=a.Clone().Set("kh_free_x","99");
+            Check("P131-display","display does not change survey/result",!ProgressPolicy.Changed(a,display)&&!ProgressPolicy.RollingConflicts("OBJ001",a,display).Any());
+            Check("P131-route-name","import handle remap does not change result",ProgressPolicy.ResultKey(a)==ProgressPolicy.ResultKey(a.Clone().Set("route_id","R_GOI1")));
+            var seg=new BhtRecord().Set("segment_id","DOAN_08").Set("package_id","GOI01").Set("package_name","DT.830").Set("km_start_m","1000").Set("km_end_m","1100").Set("side","HAI_BEN");
+            var target=seg.Clone().Set("package_id","GOI_01");
+            Check("P131-alias","verified package spelling maps to target",PackageAliasPolicy.VerifiedAliases(new[]{seg},new[]{target})["GOI01"]=="GOI_01");
+            foreach(string k in new[]{"segment_id","package_name","km_start_m","km_end_m","side"})
+                Check("P131-not-alias-"+k,"different package meaning cannot alias",PackageAliasPolicy.VerifiedAliases(new[]{seg},new[]{target.Clone().Set(k,"DIFFERENT")}).Count==0);
+            Check("P131-membership","partial package tables cannot establish rename",PackageAliasPolicy.VerifiedAliases(new[]{seg,seg.Clone().Set("segment_id","DOAN_09")},new[]{target}).Count==0);
+            Check("P131-ambiguous","coexisting spellings cannot alias",PackageAliasPolicy.VerifiedAliases(new[]{seg},new[]{seg,target.Clone().Set("segment_id","DOAN_09")}).Count==0);
+            Check("P131-leading-zero","package numbers are not guessed",PackageAliasPolicy.VerifiedAliases(new[]{seg},new[]{target.Clone().Set("package_id","GOI_1")}).Count==0);
+            Check("P131-inputs","comparison does not mutate source",seg.Get("package_id")=="GOI01"&&target.Get("package_id")=="GOI_01");
         }
 
         static void TcvnT()
@@ -404,7 +430,7 @@ namespace BHT.CoreTests
 
         static void Versions()
         {
-            Check("C11a", "hằng phiên bản", BhtVersion.Version == "1.0.30" && BhtVersion.AssemblyVersion == BhtVersion.Version + ".0" && BhtVersion.FileVersion == BhtVersion.AssemblyVersion);
+            Check("C11a", "hằng phiên bản", BhtVersion.Version == "1.1.5" && BhtVersion.AssemblyVersion == BhtVersion.Version + ".0" && BhtVersion.FileVersion == BhtVersion.AssemblyVersion);
             Check("C11b", "Lisp phải cùng phiên bản", BhtVersion.LispCompatible(BhtVersion.Version, "1") && BhtVersion.LispCompatible(" " + BhtVersion.Version + " ", "1")
                 && !BhtVersion.LispCompatible("5.0", "1") && !BhtVersion.LispCompatible("0.4.6-fix3", "1") && !BhtVersion.LispCompatible(BhtVersion.Version, "") && !BhtVersion.LispCompatible(BhtVersion.Version, "0"));
             var asm = typeof(BhtRecord).Assembly.GetName().Version.ToString();

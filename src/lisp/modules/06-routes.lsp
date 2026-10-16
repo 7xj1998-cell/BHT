@@ -29,7 +29,11 @@
 )
 
 (defun bht:route-read (id) (bht:rec-read "ROUTE" id))
-(defun bht:route-write (id rec) (bht:rec-write "ROUTE" id rec))
+(defun bht:route-write (id rec / result)
+  (bht:progress-guard "ROUTE" id rec)
+  (if (not (bht:bridge-load 'BHTROUTEWRITE)) (vl-exit-with-error "Cần BHT.Bridge cùng phiên bản để lưu tuyến và layer trong một giao dịch."))
+  (setq result (BHTROUTEWRITE id (mapcar 'cdr (bht:rec-encode rec))))
+  (if (/= result "OK") (progn (bht:err result) (vl-exit-with-error result))) T)
 (defun bht:route-ids () (bht:rec-keys "ROUTE"))
 
 (defun bht:route-ent (rec / ent)
@@ -267,10 +271,29 @@
           (if (< (abs d) 1e-8) 0.0 d))
         (if (< d -1e-8) nil (max 0.0 d))))))
 
+;; ClosestPoint clamps to open endpoints. Reject the outward tangential part
+;; before interpreting that clamped point as a valid surveyed station.
+(defun bht:route-projection-in-domain (ent pt projection / raw len cp par tangent norm along)
+  (setq raw (car projection) len (bht:curve-length ent) cp (cadddr projection))
+  (cond ((null projection) nil)
+    ((bht:curve-closed-p ent) T)
+    ((and (> raw 1e-6) (< raw (- len 1e-6))) T)
+    (T
+      (setq par (vl-catch-all-apply 'vlax-curve-getParamAtPoint (list ent cp))
+            tangent (if (and par (not (vl-catch-all-error-p par)))
+              (vl-catch-all-apply 'vlax-curve-getFirstDeriv (list ent par))))
+      (if (and tangent (not (vl-catch-all-error-p tangent))
+               (> (setq norm (sqrt (+ (* (car tangent) (car tangent)) (* (cadr tangent) (cadr tangent))))) 1e-12))
+        (progn
+          (setq along (/ (+ (* (- (car pt) (car cp)) (car tangent))
+                             (* (- (cadr pt) (cadr cp)) (cadr tangent))) norm))
+          (if (<= raw 1e-6) (>= along -1e-6) (<= along 1e-6)))
+        nil))))
+
 ;; (model-distance offset side-model closest raw-distance). side-model: 1 trai, -1 phai.
 (defun bht:route-project (rec ent pt / p d dir)
   (setq p (bht:curve-project ent pt))
-  (if (null p) nil
+  (if (or (null p) (not (bht:route-projection-in-domain ent pt p))) nil
     (progn
       (setq d (bht:route-distance-from-raw rec ent (car p))
             dir (if (= (bht:int (bht:get rec "direction")) -1) -1 1))
@@ -279,13 +302,29 @@
 
 ;; Gan diem dau + chieu tang ly trinh. Giu route_id; tang revision khi thay doi.
 ;; Station Control duoc giu lai nhung danh dau can xem lai, khong tu sua moc TDT/RTK.
-(defun bht:route-set-start-dir (id pt direction / rec ent raw oldstart olddir next sig)
+;; A click near a different road must not silently become a valid start.
+(defun bht:route-start-error (rec ent pt direction / raw len start remaining)
+  (setq raw (bht:curve-project ent pt) len (bht:curve-length ent))
+  (cond
+    ((null raw) "Không chiếu được điểm đầu lên tim đã chọn.")
+    ((> (cadr raw) 1.0) (strcat "Điểm chọn cách tim " (bht:fnum (cadr raw) 2) " m (giới hạn 1 m). Bật OSNAP và chọn lại trên đúng tim tuyến."))
+    ((and (not (bht:curve-closed-p ent))
+          (<= (if (= direction -1) (car raw) (- len (car raw))) 0.001))
+      "Chiều đã chọn đi ra ngoài đầu/cuối tim; không còn chiều dài để tính. Đảo chiều hoặc chọn lại đầu tuyến.")
+    (T nil)))
+
+(defun bht:route-set-start-dir (id pt direction / rec ent raw oldstart olddir next sig problem)
   (setq rec (bht:route-read id) ent (if rec (bht:route-ent rec) nil)
         direction (if (= direction -1) -1 1))
   (cond
     ((null rec) (list nil "không có tuyến"))
     ((null ent) (list nil "không tìm thấy Polyline tuyến"))
     ((null (setq raw (bht:curve-project ent pt))) (list nil "không chiếu được điểm đầu lên tuyến"))
+    ((setq problem (bht:route-start-error rec ent pt direction)) (list nil problem))
+    ((and (bht:route-marks rec)
+       (or (> (abs (- (car raw) (if (bht:num (bht:get rec "start_dist")) (bht:num (bht:get rec "start_dist")) 0.0))) 0.000001)
+           (/= direction (if (= (bht:int (bht:get rec "direction")) -1) -1 1))))
+      (list nil "Tim đã có mốc theo điểm đầu/chiều hiện tại. Chưa đổi thiết lập: cần đối chiếu và khai báo lại mốc trên bản sao trước khi đổi điểm đầu/chiều."))
     (T
      (setq oldstart (bht:num (bht:get rec "start_dist")) olddir (bht:int (bht:get rec "direction")))
      (if (null oldstart) (setq oldstart 0.0))
@@ -300,8 +339,9 @@
            next (bht:set next "geometry_length" (bht:fnum (bht:curve-length ent) 6)))
      (if (or (> (abs (- oldstart (car raw))) 1e-6) (/= olddir direction))
        (setq next (bht:route-bump next "Đổi điểm đầu/chiều tuyến")))
-     (bht:route-write id next)
-     (list T id (bht:route-revision next) (car raw) direction))))
+     (if (bht:route-write id next)
+       (list T id (bht:route-revision next) (car raw) direction)
+       (list nil "Không lưu được điểm đầu; thiết lập chưa được xác nhận.")))))
 
 ;; Live controls from saved numbered markers. Never persist copies: editing/deleting
 ;; a marker or changing route geometry takes effect on the next explicit calculation.
@@ -370,7 +410,7 @@
     ((null (setq pr (bht:route-project rec ent pt)))
      (list (cons 'status "NGOAI_PHAM_VI_HINH_HOC") (cons 'route (bht:get rec "route_id"))
            (cons 'revision (bht:route-revision rec))
-           (cons 'note "điểm nằm trước StartPoint hoặc không chiếu được lên tuyến")))
+           (cons 'note "Điểm vượt đầu/cuối tim, nằm trước điểm đầu đã khai báo hoặc không chiếu được lên tuyến. Không dùng lý trình đầu mút thay cho điểm ngoài phạm vi.")))
     ((and maxoff (> (cadr pr) maxoff))
      (list (cons 'status "XA_TUYEN") (cons 'route (bht:get rec "route_id")) (cons 'offset (cadr pr))
            (cons 'note (strcat "cách tuyến " (bht:fnum (cadr pr) 2) " m > " (bht:fnum maxoff 1) " m"))))
@@ -407,7 +447,7 @@
   (foreach id ids
     (setq r (bht:station-route (bht:route-read id) pt))
     (if (cdr (assoc 'offset r))
-      (if (or (null best)
+      (if (or (null best) (null (cdr (assoc 'offset best)))
               (and (= (cdr (assoc 'status best)) "XA_TUYEN") (/= (cdr (assoc 'status r)) "XA_TUYEN"))
               (and (= (= (cdr (assoc 'status best)) "XA_TUYEN") (= (cdr (assoc 'status r)) "XA_TUYEN"))
                    (< (cdr (assoc 'offset r)) (cdr (assoc 'offset best)))))
@@ -850,8 +890,11 @@
     (if (setq pt (getpoint "\nChọn điểm đầu tuyến trên/gần Polyline: "))
       (progn
         (setq pt (trans pt 1 0) raw (bht:curve-project ent pt) dir 1)
-        (if (null raw) (bht:warn "BHT: không chiếu được điểm đầu lên tuyến.")
+        (if (or (null raw) (> (cadr raw) 1.0)) (bht:warn "Điểm đầu không nằm trên/gần tim đã chọn (tối đa 1 m). Bật OSNAP và chọn lại đúng tim.")
           (progn
+            (if (and (not (bht:curve-closed-p ent)) (< (abs (- (car raw) (bht:curve-length ent))) 0.001)) (setq dir -1))
+            (if (and (> (car raw) 0.001) (< (car raw) (- (bht:curve-length ent) 0.001)))
+              (bht:msg "CẢNH BÁO: điểm chọn nằm giữa tim. Phần tim phía sau điểm đầu sẽ không được tính; kiểm tra mũi tên và phạm vi trước khi chấp nhận."))
             (setq preview (bht:route-preview-direction rec (car raw) dir))
             (setq ans (strcase (bht:ask-string "Chiều mũi tên [C=Chấp nhận/D=Đảo/K=Hủy]" "C")))
             (if (= ans "D")
@@ -1236,7 +1279,6 @@
     ((or (null len) (<= len 1e-8)) (list nil "Tuyến phải có chiều dài lớn hơn 0."))
     ((= (bht:get rec "handle") (cdr (assoc 5 (entget ent)))) (list nil "Đây là tuyến hiện tại; dùng Chọn điểm đầu hoặc cập nhật hình học."))
     (T
-      (bht:route-invalidate-objects id nil)
       (setq rec (bht:set-all rec "moc" nil))
       (foreach key '("tdt_source_handle" "tdt_source_class" "tdt_refreshed_at" "start_x" "start_y" "chieu") (setq rec (bht:set rec key "")))
       (setq rec (bht:set rec "handle" (cdr (assoc 5 (entget ent))))
@@ -1245,7 +1287,9 @@
             rec (bht:set rec "geometry_signature" (bht:route-geometry-signature ent 0.0 1))
             rec (bht:set rec "station_source" "CHUA_CO_MOC") rec (bht:set rec "station_control_status" "CHUA_CO_MOC")
             rec (bht:set rec "nguon" "Polyline chọn lại") rec (bht:route-bump rec "Thay hình học tuyến"))
-      (bht:route-write id rec) (list T id))))
+      (bht:route-write id rec)
+      (bht:route-invalidate-objects id nil)
+      (list T id))))
 
 (defun bht:route-delete (id / rec)
   (bht:progress-guard "ROUTE" id nil)

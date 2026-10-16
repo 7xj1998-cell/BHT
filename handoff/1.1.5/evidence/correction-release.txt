@@ -1,0 +1,54 @@
+﻿CORRECTION132-FIXTURE-READY
+CORRECTION132-UNDOCTL=57 RECORDING=True
+PASS CORRECTION132 50-confirmed-fixture
+PASS CORRECTION132 preview-cancel-no-write
+PASS CORRECTION132 baseline-approval-required_.UNDO Current settings: Auto = Off, Control = All, Combine = Yes, Layer = Yes
+PASS CORRECTION132 fault-after-cad-rejected
+PASS CORRECTION132 atomic-cad-record-history-rollback_.UNDO Current settings: Auto = Off, Control = All, Combine = Yes, Layer = Yes
+PASS CORRECTION132 code-corrected-survey-revision
+PASS CORRECTION132 49-unchanged-locked
+PASS CORRECTION132 original-rtk-route-segment-unchanged
+PASS CORRECTION132 baseline-keeps-exact-old-record
+PASS CORRECTION132 explicit-parent-chain
+PASS CORRECTION132 manual-transform-retained
+PASS CORRECTION132 symbol-matches-corrected-code_.U GROUP
+PASS CORRECTION132 one-undo-restores-entire-correction_.REDO GROUP
+PASS CORRECTION132 redo-restores-data-history-and-cad
+PASS CORRECTION132 repeat-confirm-no-duplicate
+PASS CORRECTION132 no-op-no-history
+PASS CORRECTION132 net-guard-progress_locked
+PASS CORRECTION132 lisp-guard-progress_locked
+PASS CORRECTION132 net-guard-revision_id
+PASS CORRECTION132 lisp-guard-revision_id
+PASS CORRECTION132 net-guard-pt
+PASS CORRECTION132 lisp-guard-pt
+PASS CORRECTION132 net-guard-doan
+PASS CORRECTION132 lisp-guard-doan
+PASS CORRECTION132 net-guard-ma_hieu
+PASS CORRECTION132 lisp-guard-ma_hieu
+PASS CORRECTION132 net-guard-ghi_chu
+PASS CORRECTION132 lisp-guard-ghi_chu
+PASS CORRECTION132 history-immutable-net
+PASS CORRECTION132 history-immutable-lisp
+PASS CORRECTION132 segment-reopen-refused
+PASS CORRECTION132 invalid-code-rejected
+PASS CORRECTION132 locked-symbol-layer-rejected
+PASS CORRECTION132 same-station-no-spurious-revision
+PASS CORRECTION132 rtk-preview-recalculates
+PASS CORRECTION132 segment-change-needs-approval_.UNDO Current settings: Auto = Off, Control = All, Combine = Yes, Layer = Yes
+PASS CORRECTION132 point-assignment-counters
+PASS CORRECTION132 relink-preserves-raw-data-and-others
+PASS CORRECTION132 relink-keeps-previous-results
+PASS CORRECTION132 out-of-range-rejected
+PASS CORRECTION132 shared-point-rejected
+PASS CORRECTION132 stale-preview-rejected
+PASS CORRECTION132 old-rolling-import-refused
+PASS CORRECTION132 full-import-preserves-history
+PASS CORRECTION132 dwg-reopen-history
+PASS CORRECTION132 segment-export-keeps-lineage
+PASS CORRECTION132 export-source-unchanged_.UNDO Current settings: Auto = Off, Control = All, Combine = Yes, Layer = Yes
+PASS CORRECTION132 assignment-only-does-not-increment-survey_.UNDO Current settings: Auto = Off, Control = All, Combine = Yes, Layer = Yes
+PASS CORRECTION132 pole-count-recalculates-dependent-result_.UNDO Current settings: Auto = Off, Control = All, Combine = Yes, Layer = Yes
+PASS CORRECTION132 pole-count-correction-history
+CORRECTION132-TOTAL=50 FAIL=0
+Evidence: D:\lisp\BHT\audit-1.1.5\correction-release

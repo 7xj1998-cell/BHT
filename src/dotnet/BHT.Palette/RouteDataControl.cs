@@ -55,6 +55,7 @@ namespace BHT.Palette
             edits.Controls.Add(Btn("Chọn lại tuyến…",(s,e)=>SelectedRouteCommand("BHTCHONLAITUYEN")));
             edits.Controls.Add(Btn("Xóa tuyến…",(s,e)=>SelectedRouteCommand("BHTXOATUYEN")));
             panel.Controls.Add(edits);
+            panel.Controls.Add(Btn("Đặt layer theo tên tuyến…",(s,e)=>NormalizeRouteLayers()));
             routeList.SelectedIndexChanged+=(s,e)=>{HighlightSelectedRoute();UpdateRouteTools();};
             routeList.DoubleClick+=(s,e)=>ZoomSelectedRoute();
             return panel;
@@ -64,6 +65,21 @@ namespace BHT.Palette
             var scroll=SavePageScroll();
             try { RefreshRouteDataCore(); }
             finally { RestorePageScroll(scroll); }
+        }
+        private void NormalizeRouteLayers()
+        {
+            if(!NeedDoc())return;var doc=_doc;
+            try{
+                var lines=RouteLayers.Preview(doc.Database);
+                if(lines.Length==0){Status("Chưa có tuyến để đặt layer.");return;}
+                if(MessageBox.Show(this,string.Join("\r\n",lines)+"\r\n\r\nChỉ đổi layer của tim tham chiếu. Giữ hình học, hồ sơ, mốc và layer cũ. Tiếp tục?",
+                    "Layer theo tên tuyến",MessageBoxButtons.OKCancel,MessageBoxIcon.Question)!=DialogResult.OK)return;
+                AcadDispatcher.RunInCommandContext("Đặt layer theo tuyến",()=>{
+                    if(_doc!=doc)return OpResult.Fail("Bản vẽ đã đổi; kiểm tra lại.");
+                    if(!lines.SequenceEqual(RouteLayers.Preview(doc.Database)))return OpResult.Fail("Danh sách tuyến/layer đã đổi sau đối chiếu. Mở lại để kiểm tra.");
+                    return OpResult.Success("Đã đặt layer cho "+RouteLayers.Apply(doc.Database)+" tim tuyến.");
+                },r=>{StatusResult(r);if(r.Ok)RefreshRouteData();});
+            }catch(Exception ex){Status("Chưa đổi layer: "+ex.Message);}
         }
         private void RefreshRouteDataCore()
         {

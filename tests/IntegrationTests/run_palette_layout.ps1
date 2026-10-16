@@ -15,7 +15,9 @@ $lines = @('(setvar "SECURELOAD" 0)', '(setvar "LISPSYS" 1)', '_.NETLOAD', ('"' 
 if($RuntimePath){$lines=@($lines | ForEach-Object {$_.Replace(("$root\src\lisp\BHT-$version.lsp").Replace('\','/'),$RuntimePath.Replace('\','/'))})}
 $scr = Join-Path $out 'ui-test.scr'
 [IO.File]::WriteAllLines($scr, $lines, [Text.UTF8Encoding]::new($true))
-& "$AcadDir\accoreconsole.exe" @profileArgs /isolate BHTUILayout (Join-Path $out 'ui-profile') /s $scr /l en-US > (Join-Path $out 'ui-console.log')
+. "$root\scripts\coreconsole.ps1"
+if(!$AcadProfile){$AcadProfile='BHTResearch111'}
+$log=Invoke-BhtCoreConsole -AcadDir $AcadDir -Profile $AcadProfile -Script $scr -OutputDirectory (Join-Path $out 'palette-layout')
 if (-not (Test-Path -LiteralPath $result)) { throw 'Palette probe did not complete' }
 $report = [IO.File]::ReadAllText($result)
 Write-Host $report

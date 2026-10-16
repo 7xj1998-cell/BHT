@@ -8,6 +8,8 @@ public class Progress125Probe
  [CommandMethod("PROGRESS125STAGELABEL")]public static void StageLabel(){Check("stage10-label-present-in-next-drawing",HasLabel(AcApp.DocumentManager.MdiActiveDocument.Database,"Km1+050.00"));}
  static int count,fail;static void Check(string n,bool ok){count++;if(!ok)fail++;AcApp.DocumentManager.MdiActiveDocument.Editor.WriteMessage("\n"+(ok?"PASS":"FAIL")+" PROGRESS125 "+n);}
  static BhtRecord Read(Database db,string id){using(var tr=db.TransactionManager.StartOpenCloseTransaction())return BhtStore.Read(tr,db,"OBJ",id);}
+ // Explicitly reopen test fixtures before editing survey content; never depend on a guard loophole.
+ static void FixtureContent(Database db,string id,string content){using(var tr=db.TransactionManager.StartTransaction()){var r=Read(db,id);bool locked=ProgressPolicy.Locked(r);BhtStore.Write(tr,db,"OBJ",id,r.Clone().Set("progress_locked","0"));BhtStore.Write(tr,db,"OBJ",id,r.Clone().Set("progress_locked",locked?"1":"0").Set("sign_content",content));tr.Commit();}}
  static int Count(Database db,string kind){using(var tr=db.TransactionManager.StartOpenCloseTransaction())return BhtStore.All(tr,db,kind).Count;}
  static int Points(Database db){using(var tr=db.TransactionManager.StartOpenCloseTransaction())return BhtStore.Points(tr,db).Count;}
  static void Label(Database db,string id,string text){using(var tr=db.TransactionManager.StartTransaction()){var bt=(BlockTable)tr.GetObject(db.BlockTableId,OpenMode.ForRead);var ms=(BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace],OpenMode.ForWrite);var rt=(RegAppTable)tr.GetObject(db.RegAppTableId,OpenMode.ForRead);if(!rt.Has("BHT_KH")){rt.UpgradeOpen();var a=new RegAppTableRecord{Name="BHT_KH"};rt.Add(a);tr.AddNewlyCreatedDBObject(a,true);}var e=new DBText {TextString=text,Height=1,Position=new Point3d(50,4,0)};ms.AppendEntity(e);tr.AddNewlyCreatedDBObject(e,true);using(var x=new ResultBuffer(new TypedValue(1001,"BHT_KH"),new TypedValue(1000,id),new TypedValue(1000,"NHAN"),new TypedValue(1000,"0"),new TypedValue(1000,"0"),new TypedValue(1000,"0"),new TypedValue(1000,"STATION")))e.XData=x;tr.Commit();}}
@@ -32,6 +34,7 @@ public class Progress125Probe
     BhtStore.Write(tr,target,"ROUTE","R10",new BhtRecord().Set("route_id","R10").Set("handle",line.Handle.ToString()).Set("loai","TIM_DUONG"));BhtStore.MetaSet(tr,target,"station_active_route","R10");BhtStore.MetaSet(tr,target,"symbol_road_handle",line.Handle.ToString());BhtStore.MetaSet(tr,target,"custom_block","LOCAL_BLOCK");tr.Commit();}
    ProjectTransfer.ImportRolling(target,all);
    Check("route-name-collision-renamed-in-imported-object",Read(target,"A10").Get("route_id")=="R10_GOI1");
+   using(var tr=target.TransactionManager.StartOpenCloseTransaction())Check("115-layer-uses-final-renamed-route",((Entity)tr.GetObject(CadView.IdFromHandle(target,BhtStore.Read(tr,target,"ROUTE","R10_GOI1").Get("handle")),OpenMode.ForRead)).Layer=="BHT_TUYEN_R10_GOI1");
    using(var tr=target.TransactionManager.StartOpenCloseTransaction())Check("local-active-route-and-imported-segment-preserved",BhtStore.Meta(tr,target,"station_active_route","")=="R10"&&BhtStore.Read(tr,target,"SEG","D10").Get("route_id")=="R10_GOI1"&&BhtStore.Read(tr,target,"ROUTE","R10").Get("loai")=="TIM_DUONG");
    using(var tr=target.TransactionManager.StartOpenCloseTransaction())Check("local-presentation-handles-not-remapped-as-source",BhtStore.Meta(tr,target,"symbol_road_handle","")==BhtStore.Read(tr,target,"ROUTE","R10").Get("handle")&&BhtStore.Meta(tr,target,"custom_block","")=="LOCAL_BLOCK");
    Check("renamed-route-roundtrip-can-export",ProjectTransfer.Export(target,Path.Combine(dir,"renamed.bht"))>0);
@@ -49,12 +52,12 @@ public class Progress125Probe
   using(var target=new Database(true,true)){ProjectTransfer.ImportRolling(target,all);using(var tr=target.TransactionManager.StartTransaction()){var route=BhtStore.Read(tr,target,"ROUTE","R10");var id=target.GetObjectId(false,new Handle(Convert.ToInt64(route.Get("handle"),16)),0);((Entity)tr.GetObject(id,OpenMode.ForWrite)).TransformBy(Matrix3d.Displacement(new Vector3d(1,0,0)));tr.Commit();}bool blocked=false;try{ProjectTransfer.Export(target,Path.Combine(dir,"moved-route.bht"));}catch(InvalidOperationException){blocked=true;}Check("changed-confirmed-route-blocks-export",blocked&&!File.Exists(Path.Combine(dir,"moved-route.bht")));}
   using(var target=new Database(true,true)){
    string content="<sign-content version=\"1\"><face index=\"0\" code=\"I.419a\"><field key=\"LOCATION#0\">ĐỨC HÒA</field><field key=\"STATION#0\"></field></face></sign-content>";
-   using(var tr=source.TransactionManager.StartTransaction()){BhtStore.Write(tr,source,"OBJ","B11",Read(source,"B11").Clone().Set("sign_content",content));tr.Commit();}
+   FixtureContent(source,"B11",content);
    string equivalent=Path.Combine(dir,"equivalent.bht");ProjectTransfer.Export(source,equivalent);ProjectTransfer.ImportRolling(target,equivalent);
    string variant=content.Replace("<field key=\"STATION#0\"></field>","<field key=\"STATION#0\" />").Normalize(System.Text.NormalizationForm.FormD);
-   using(var tr=target.TransactionManager.StartTransaction()){BhtStore.Write(tr,target,"OBJ","B11",Read(target,"B11").Clone().Set("sign_content",variant));tr.Commit();}
+   FixtureContent(target,"B11",variant);
    Check("129-equivalent-content-import-idempotent",ProjectTransfer.ImportRolling(target,equivalent)==0&&Read(target,"B11").Get("sign_content")==variant);
-   using(var tr=target.TransactionManager.StartTransaction()){BhtStore.Write(tr,target,"OBJ","B11",Read(target,"B11").Clone().Set("sign_content",content.Replace("HÒA","HOÀ")));tr.Commit();}
+   FixtureContent(target,"B11",content.Replace("HÒA","HOÀ"));
    bool blocked=false;try{ProjectTransfer.ImportRolling(target,equivalent);}catch(ImportConflictException ex){blocked=ex.Conflicts.Any(c=>c.Id=="B11"&&c.Field=="sign_content"&&c.Current.Contains("HOÀ")&&c.Incoming.Contains("HÒA")&&!c.Current.Contains("<field"));}
    Check("129-actual-accent-change-still-reported-readably",blocked);
   }

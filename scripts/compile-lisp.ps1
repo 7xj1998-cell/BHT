@@ -18,7 +18,8 @@ $lines=@('(vl-load-com)','(if (/= (getvar "LISPSYS") 1) (progn (princ "\nCOMPILE
 $scr=Join-Path $out 'compile.scr';$log=Join-Path $out 'compile.log'
 [IO.File]::WriteAllLines($scr,$lines,[Text.UTF8Encoding]::new($true))
 $profileArgs=@();if($AcadProfile){$profileArgs=@('/p',$AcadProfile)}
-& "$AcadDir\accoreconsole.exe" @profileArgs /isolate BHTProtectedCompile (Join-Path $out 'profile') /s $scr /l en-US > $log
-$result=[IO.File]::ReadAllText($log,[Text.Encoding]::Unicode)
+. "$PSScriptRoot\coreconsole.ps1"
+if(!$AcadProfile){$AcadProfile='BHTResearch111'}
+$result=Invoke-BhtCoreConsole -AcadDir $AcadDir -Profile $AcadProfile -Script $scr -OutputDirectory $out
 if(!(Test-Path -LiteralPath $fas) -or (Get-Item $fas).Length -lt 1000 -or $result -notmatch '(?m)^COMPILE-PASS' -or $result -match '(?m)^COMPILE-FAIL'){throw 'Lisp compilation failed; see compile.log'}
 Write-Host "Compiled $fas"

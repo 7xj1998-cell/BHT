@@ -18,16 +18,16 @@ namespace BHT.Palette
         {
             conflicts=items;
             Text="BHT "+BhtVersion.Version+" - Đối chiếu dữ liệu nạp";
-            Size=new Size(1120,720);MinimumSize=new Size(760,520);
+            Size=new Size(1120,760);MinimumSize=new Size(820,620);
             StartPosition=FormStartPosition.CenterParent;AutoScaleMode=AutoScaleMode.Dpi;
             var layout=new TableLayoutPanel {Dock=DockStyle.Fill,Padding=new Padding(12),ColumnCount=1,RowCount=6};
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             layout.RowStyles.Add(new RowStyle(SizeType.Percent,100));
-            layout.RowStyles.Add(new RowStyle(SizeType.Absolute,140));
+            layout.RowStyles.Add(new RowStyle(SizeType.Absolute,110));
             layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            var note=new Label {AutoSize=true,Dock=DockStyle.Fill,Text="Chưa nạp dữ liệu do có xung đột. Bản vẽ đích được giữ nguyên.\r\nChọn dòng để xem đầy đủ hai giá trị; đối chiếu dữ liệu khảo sát gốc trước khi sửa và nạp lại."};
+            var note=new Label {AutoSize=true,Dock=DockStyle.Fill,Text="Chưa nạp do có xung đột; bản vẽ giữ nguyên. Cùng mã OBJ có thể là hai hồ sơ khác nhau.\r\nChọn dòng để đọc đủ hai giá trị và đối chiếu điểm gốc. Có thể zoom/pan CAD khi bảng mở."};
             var filter=new TableLayoutPanel {Dock=DockStyle.Fill,AutoSize=true,ColumnCount=2};
             filter.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));filter.ColumnStyles.Add(new ColumnStyle(SizeType.Percent,100));
             filter.Controls.Add(new Label {Text="Tìm mã / nội dung:",AutoSize=true,Anchor=AnchorStyles.Left},0,0);
@@ -36,6 +36,9 @@ namespace BHT.Palette
             grid.Dock=DockStyle.Fill;grid.ReadOnly=true;grid.AllowUserToAddRows=false;grid.AllowUserToDeleteRows=false;
             grid.RowHeadersVisible=false;grid.SelectionMode=DataGridViewSelectionMode.FullRowSelect;grid.MultiSelect=false;
             grid.AutoSizeColumnsMode=DataGridViewAutoSizeColumnsMode.Fill;grid.AllowUserToOrderColumns=true;
+            grid.ColumnHeadersHeightSizeMode=DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            grid.ColumnHeadersDefaultCellStyle.WrapMode=DataGridViewTriState.True;
+            grid.ColumnHeadersDefaultCellStyle.Padding=new Padding(5);
             foreach(string title in new[]{"Loại","Mã đối tượng","Nội dung khác biệt","Trường dữ liệu","Bản vẽ hiện tại","Tệp BHT nạp vào"})grid.Columns.Add(title,title);
             grid.Columns[0].FillWeight=55;grid.Columns[1].FillWeight=85;grid.Columns[2].FillWeight=130;
             detail.Dock=DockStyle.Fill;detail.Multiline=true;detail.ReadOnly=true;detail.ScrollBars=ScrollBars.Vertical;
@@ -48,14 +51,14 @@ namespace BHT.Palette
             layout.Controls.Add(note,0,0);layout.Controls.Add(filter,0,1);layout.Controls.Add(count,0,2);
             layout.Controls.Add(grid,0,3);layout.Controls.Add(detail,0,4);layout.Controls.Add(buttons,0,5);Controls.Add(layout);
             search.TextChanged+=(s,e)=>Fill();grid.SelectionChanged+=(s,e)=>ShowDetail();
-            PaletteTheme.ApplyDialog(this);
+            PaletteTheme.ApplyTableDialog(this);
             grid.BackgroundColor=Color.White;
             grid.DefaultCellStyle.ForeColor=Color.FromArgb(24,45,39);
             grid.DefaultCellStyle.BackColor=Color.White;
             grid.DefaultCellStyle.SelectionBackColor=Color.FromArgb(6,95,70);
             grid.DefaultCellStyle.SelectionForeColor=Color.White;
             grid.DefaultCellStyle.WrapMode=DataGridViewTriState.True;
-            grid.AutoSizeRowsMode=DataGridViewAutoSizeRowsMode.AllCells;
+            grid.AutoSizeRowsMode=DataGridViewAutoSizeRowsMode.DisplayedCells;
             Fill();
         }
         static string FieldName(string field)

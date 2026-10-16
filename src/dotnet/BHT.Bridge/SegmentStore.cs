@@ -25,6 +25,8 @@ namespace BHT.Bridge
                     if (row.Get("route_id") != "" && BhtStore.Read(tr, db, "ROUTE", row.Get("route_id")) == null)
                         throw new InvalidOperationException("Đoạn " + row.Get("segment_id") + ": chưa có tim " + row.Get("route_id") + ". Khai báo hoặc chọn lại tim trước khi áp dụng.");
                 var old = BhtStore.All(tr, db, "SEG").ToDictionary(p => p.Key, p => p.Value, StringComparer.OrdinalIgnoreCase);
+                var aliases=SegmentDuplicatePolicy.NewAliasConflicts(rows,old.Select(p=>p.Value.Clone().Set("segment_id",p.Key)));
+                if(aliases.Count>0)throw new ImportConflictException(aliases);
                 var keys = new HashSet<string>(rows.Select(r => r.Get("segment_id")), StringComparer.OrdinalIgnoreCase);
                 foreach (var row in rows) BhtStore.Write(tr, db, "SEG", row.Get("segment_id"), row);
                 if (replace) foreach (var key in BhtStore.Keys(tr, db, "SEG")) if (!keys.Contains(key)) BhtStore.Delete(tr, db, "SEG", key);

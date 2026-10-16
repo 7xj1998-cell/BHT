@@ -1,0 +1,6 @@
+(load (strcat (getenv "BHT_QA110_TESTS") "/state110.lsp"))
+(setq qa110-current (qa110-saved-state))
+(setq qa110-f (open (strcat (getvar "DWGPREFIX") "qa110-reopened-state.lsp") "w"))
+(prin1 qa110-current qa110-f) (close qa110-f)
+(princ "\nQA110-REOPEN-WRITTEN: runner compares serialized snapshots byte-for-byte")
+(princ "\nQA110-DONE") (princ)

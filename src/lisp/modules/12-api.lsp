@@ -46,12 +46,17 @@
   (list "OK" *bht-version* *bht-api-level* *bht-build*)
 )
 
+(defun bht:api-progress-preview-apply (token)
+  (bht:api-run 'bht:progress-preview-apply (list token)))
+(vl-acad-defun 'bht:api-progress-preview-apply)
+
 ;; Lay cac thong bao cua lenh tuong tac de hien ngay trong Palette.
 ;; DRAIN/CLEAR: tra ve theo dung thu tu roi xoa bo dem; PEEK: chi doc.
 (defun bht:api-messages (mode / out)
   (setq out (reverse *bht-screen-messages*))
+  (if *bht-screen-message-overflow* (setq out (append out (list "Báo cáo vượt giới hạn bộ nhớ (20.000 dòng / 8 triệu ký tự). Kết quả còn lại vẫn có tại dòng lệnh F2; chia phạm vi để xem đầy đủ."))))
   (if (member (strcase (bht:str mode)) '("DRAIN" "CLEAR"))
-    (setq *bht-screen-messages* nil *bht-screen-problems* nil))
+    (setq *bht-screen-messages* nil *bht-screen-problems* nil *bht-screen-message-count* 0 *bht-screen-message-size* 0 *bht-screen-message-overflow* nil))
   (cons "OK" out)
 )
 
@@ -418,6 +423,22 @@
   '(bht:api-field-manual-control bht:api-field-input-preview bht:api-field-input-use bht:api-field-save bht:api-field-pair bht:api-field-mode bht:api-field-auto bht:api-field-delete bht:api-field-heading bht:api-version bht:api-messages bht:api-problems bht:api-info-handle bht:api-info-point bht:api-info-object bht:api-info-photo
     bht:api-photo-path bht:api-object-delete bht:api-symbol-upgrade bht:api-sign-fill bht:api-sign-scale bht:api-sign-display bht:api-sign-place bht:api-sign-free bht:api-symbol-sync bht:api-label-sync bht:api-point-style bht:api-rtk-scale bht:api-photo-sync bht:api-photo-stats
     bht:api-check bht:api-object-station bht:api-station-label-refresh bht:api-route-select bht:api-route-diag bht:api-draworder bht:api-label-rotate bht:api-symbol-gap bht:api-symbol-display bht:api-symbol-road bht:api-symbol-center))
+
+(defun bht:api-correction-evaluate (id encoded kind)
+  (bht:api-run 'bht:correction-evaluate (list id encoded kind)))
+(defun bht:api-correction-refresh (id)
+  (bht:api-run '(lambda (id / *bht-preserve-symbol-placement* *bht-scoped-correction*)
+    (setq *bht-preserve-symbol-placement* T *bht-scoped-correction* T)
+    (if (= (bht:get (bht:obj-read id) "lifecycle") "RETIRED")
+      (bht:symbol-delete id)
+      (progn (bht:symbol-refresh (list id)) (bht:kh-station-label-refresh (list id))))
+    (list "Đã cập nhật ký hiệu hiện có.")) (list id)))
+(defun bht:api-correction-state (/ ss i out)
+  (setq ss (ssget "_X") i 0)
+  (if ss (repeat (sslength ss)
+    (setq out (cons (vl-prin1-to-string (entget (ssname ss i) '("*"))) out) i (1+ i))))
+  (cons "OK" (reverse out)))
+(setq *bht-api-functions* (append '(bht:api-correction-evaluate bht:api-correction-refresh bht:api-correction-state) *bht-api-functions*))
 
 (defun bht:api-register (/ n)
   (setq n 0)

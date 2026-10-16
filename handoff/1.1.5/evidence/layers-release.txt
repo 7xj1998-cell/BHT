@@ -1,0 +1,24 @@
+﻿PASS LAYERS115 new-polyline-layer-uses-route-name=OK
+PASS LAYERS115 mark-write-keeps-route-layer=OK
+PASS LAYERS115 rename-uses-final-route-name=OK
+PASS LAYERS115 replace-layer-conflict-preserves-pending-station=OK
+LAYERS115-DONE FAIL=0
+PASS CORRECTION132 L115-preview-read-only
+PASS CORRECTION132 L115-legacy-migrate-count
+PASS CORRECTION132 L115-geometry-records-unchanged
+PASS CORRECTION132 L115-repeat-no-op
+PASS CORRECTION132 L115-layer-final-route-name
+PASS CORRECTION132 L115-style-conflict-aborts-all
+PASS CORRECTION132 L115-locked-source-blocks-without-unlocking
+PASS CORRECTION132 L115-viewport-freeze-preserved-and-migration-blocked
+PASS CORRECTION132 L115-save-reopen-identical
+PASS CORRECTION132 L115-legacy-native-line-layer-only
+PASS CORRECTION132 L115-real-normalize-all-routes
+PASS CORRECTION132 L115-real-all-records-RTK-geometry-xdata-unchanged
+PASS CORRECTION132 L115-real-repeat-idempotent
+PASS CORRECTION132 L115-real-save-reopen
+PASS CORRECTION132 L115-export-keeps-source
+PASS CORRECTION132 L115-import-route-layers-no-mangled-name
+PASS CORRECTION132 L115-repeat-rolling-no-duplicate
+PASS CORRECTION132 L115-import-layer-conflict-rolls-back-records-and-cad
+CORRECTION132-TOTAL=18 FAIL=0

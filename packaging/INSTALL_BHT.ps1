@@ -1,10 +1,10 @@
-﻿# BHT 1.0.30 - bo cai Application Bundle
+﻿# BHT 1.1.5 - bo cai Application Bundle
 # File nay PHAI luu UTF-8 co BOM de Windows PowerShell 5.1 doc dung tieng Viet.
 param([switch]$ValidateOnly)
 $ErrorActionPreference = 'Stop'
 try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch { }
 
-$bhtVersion = '1.0.30'
+$bhtVersion = '1.1.5'
 
 function Test-BhtPackage([string]$PackageRoot) {
   $rootPath = [IO.Path]::GetFullPath($PackageRoot).TrimEnd('\') + '\'

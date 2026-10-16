@@ -1,9 +1,9 @@
-# Phạm vi giấy phép BHT
+﻿# Phạm vi giấy phép và tài nguyên BHT
 
-SPDX-License-Identifier: MIT
+Mã BHT do chủ dự án sở hữu tiếp tục công bố theo MIT trong LICENSE. Giữ thông báo bản quyền gốc. Các bản GPL lịch sử giữ quyền đã được cấp; lần công bố hiện tại không thu hồi quyền cũ.
 
-Mã BHT do chủ dự án sở hữu được công bố theo MIT trong LICENSE. Việc chuyển giấy phép được chủ dự án yêu cầu cho lần công bố này. Kho GPL-3.0 trước đây có lịch sử riêng; việc công bố mới không thu hồi quyền đã cấp theo GPL cho các bản cũ.
+MIT không cấp lại quyền đối với AutoCAD/Autodesk SDK, ADSCivil, TDT, phông và dữ liệu của bên khác. DLL Autodesk, hồ sơ .bht, DWG khảo sát, ảnh hiện trường, credentials và thư viện cài đặt cục bộ không nằm trong kho nguồn công khai.
 
-MIT không cấp quyền đối với AutoCAD/Autodesk SDK, TDT, ADSCivil, tài nguyên biển báo, phông hoặc dữ liệu của bên khác. Không đưa các tài nguyên này vào kho công khai. Tài liệu nghiên cứu nhắc tên nhà cung cấp không có nghĩa mã hoặc tài nguyên của họ được cấp phép lại.
+Chủ dự án đã xác nhận có quyền phân phối công khai bộ cài đầy đủ có ADSCivil/phông TDT. Tài nguyên mẫu trong assets có nguồn ghi tại sign-previews/README.md, sources.json và light-blocks/SOURCES.txt. Chúng được giữ để đọc/build đúng giao diện và mẫu đèn; không coi tài nguyên bên ngoài là mã MIT. Ghi chú “chưa xác nhận quyền” trong SOURCES.txt là ghi nhận lịch sử trước xác nhận của chủ dự án, được giữ nguyên như bằng chứng nguồn.
 
-Kho công khai bao gồm mã nguồn BHT, script build, kiểm tra và tài liệu; để đóng gói đầy đủ cần bổ sung tài nguyên cục bộ có quyền sử dụng.
+Chỉ 9 DWG trong assets/light-blocks là mẫu thư viện được đưa vào nguồn; không có bản vẽ công trình. Bộ cài1.1.5 hiện có nằm ở GitHub Release riêng; thư viện ADS/phông đầy đủ không đưa vào lịch sử Git. Muốn đóng gói trên máy khác, cung cấp tài nguyên được phép sử dụng/phân phối theo đường dẫn script. Không dùng kho này thay giấy phép AutoCAD hoặc nhà cung cấp.

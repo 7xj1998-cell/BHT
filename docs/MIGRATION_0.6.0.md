@@ -40,7 +40,7 @@ Theo [Autodesk SECURELOAD](https://help.autodesk.com/cloudhelp/2024/ENU/AutoCAD-
 
 ## Bước chuyển tiếp
 
-1. Sau khi công cụ giao diện hoạt động, nghiệm thu [checklist UI thật](UI_ACCEPTANCE_0.6.0.md) trên bản vẽ thử riêng.
+1. Sau khi công cụ giao diện hoạt động, nghiệm thu [checklist UI thật](old/UI_ACCEPTANCE_0.6.0.md) trên bản vẽ thử riêng.
 2. Chuyển draw order/leader/block insertion sang dịch vụ .NET transaction; giữ kết quả DXF, vị trí RTK, undo và sự tương đương Lisp làm chuẩn.
 3. Chuyển nhãn/tuyến/ảnh theo từng module sau khi có fixture hồi quy; không thay đồng thời storage và thuật toán.
 4. Phát triển nguồn hình biển BHT độc lập, rồi ký gói phát hành bằng chứng thư nhà phát hành.

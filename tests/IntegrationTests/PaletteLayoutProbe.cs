@@ -77,7 +77,9 @@ public class PaletteLayoutProbe
             dialog.StartPosition=FormStartPosition.Manual;dialog.Location=new Point(-3000,-3000);dialog.Show();Application.DoEvents();
             var body=(TextBox)Field(dialog,"body");
             Check("report-opens-at-beginning",body.SelectionStart==0&&body.GetCharIndexFromPosition(new Point(2,2))==0);
-            Check("report-wraps-no-horizontal-scroll",body.ReadOnly&&body.WordWrap&&body.ScrollBars==ScrollBars.Vertical);
+            Check("report-wraps-with-optional-horizontal-scroll",body.ReadOnly&&body.WordWrap&&body.ScrollBars==ScrollBars.Both);
+            var wrap=Children(dialog).OfType<CheckBox>().Single();
+            wrap.Checked=false;Check("report-can-disable-wrap",!body.WordWrap);wrap.Checked=true;
             foreach(var size in new[]{new Size(620,420),new Size(900,680)}){
                 dialog.Size=size;Application.DoEvents();
                 foreach(var b in Children(dialog).OfType<Button>())Check("report-buttons-visible-"+size.Width+"-"+b.Text,dialog.ClientRectangle.Contains(dialog.PointToClient(b.PointToScreen(new Point(b.Width-1,b.Height-1)))));

@@ -74,10 +74,29 @@ else{Copy-Item -LiteralPath (Join-Path $root 'README.md') -Destination $stage}
 Copy-Item -LiteralPath (Join-Path $root 'CHANGELOG.md') -Destination $stage
 if($ProtectedRuntime){
  New-Item -ItemType Directory -Path (Join-Path $stage 'docs') -Force | Out-Null
- foreach($doc in @('HUONG_DAN.md',"RELEASE_NOTES_$version.md","DANH_MUC_LENH_NUT_$version.md","BAO_CAO_NGHIEM_THU_$version.md",'PHAN_TICH_TDT_9_1.md')){
+ foreach($doc in @('HUONG_DAN.md','HUONG_DAN_TEST_TOAN_BO.md',"HUONG_DAN_HIEU_CHINH_$version.md","RELEASE_NOTES_$version.md","DANH_MUC_LENH_NUT_$version.md","BAO_CAO_NGHIEM_THU_$version.md",'PHAN_TICH_TDT_9_1.md')){
   Copy-Item -LiteralPath (Join-Path $root "docs\$doc") -Destination (Join-Path $stage 'docs')
   $htmlDoc=[IO.Path]::ChangeExtension($doc,'.html')
   if(Test-Path -LiteralPath (Join-Path $root "docs\$htmlDoc")){Copy-Item -LiteralPath (Join-Path $root "docs\$htmlDoc") -Destination (Join-Path $stage 'docs')}
+ }
+ $guideImages=Join-Path $root "docs\images\$version"
+ if(Test-Path -LiteralPath $guideImages){
+  $imageParent=Join-Path $stage 'docs\images'
+  New-Item -ItemType Directory -Force -Path $imageParent | Out-Null
+  Copy-Item -LiteralPath $guideImages -Destination $imageParent -Recurse
+ }
+ # Preserve the explicitly linked previous guide, including its relative images.
+ $currentGuide=Join-Path $root "docs\HUONG_DAN_HIEU_CHINH_$version.md"
+ if(Test-Path -LiteralPath $currentGuide){
+  foreach($match in [regex]::Matches([IO.File]::ReadAllText($currentGuide),'old/(\d+\.\d+\.\d+)/HUONG_DAN_[A-Za-z0-9_.-]+\.md')){
+   $archive=Join-Path $root ('docs\old\'+$match.Groups[1].Value)
+   $archiveParent=Join-Path $stage 'docs\old'
+   $archiveTarget=Join-Path $archiveParent $match.Groups[1].Value
+   if((Test-Path -LiteralPath $archive) -and !(Test-Path -LiteralPath $archiveTarget)){
+    New-Item -ItemType Directory -Force -Path $archiveParent | Out-Null
+    Copy-Item -LiteralPath $archive -Destination $archiveTarget -Recurse
+   }
+  }
  }
  $engineeringReview=Join-Path $root "docs\RA_SOAT_KY_THUAT_$version.md"
  if(Test-Path -LiteralPath $engineeringReview){Copy-Item -LiteralPath $engineeringReview -Destination (Join-Path $stage 'docs')}
@@ -114,6 +133,8 @@ $bundleContents = Join-Path $bundle 'Contents\Windows'
 New-Item -ItemType Directory -Force -Path $bundleContents | Out-Null
 Copy-Item -LiteralPath (Join-Path $root 'packaging\BHT.bundle\PackageContents.xml') -Destination $bundle
 Copy-Item -LiteralPath $lisp,(Join-Path $bin 'BHT.Core.dll'),(Join-Path $bin 'BHT.Bridge.dll'),(Join-Path $bin 'BHT.Palette.dll') -Destination $bundleContents
+$guide=Join-Path $root "docs\HUONG_DAN_HIEU_CHINH_$version.md"
+if(Test-Path -LiteralPath $guide){Copy-Item -LiteralPath $guide -Destination $bundleContents}
 if(!$ProtectedRuntime){Copy-Item -LiteralPath (Join-Path $root 'src\lisp\modules') -Destination $bundleContents -Recurse}
 else{
  $manifestPath=Join-Path $bundle 'PackageContents.xml'

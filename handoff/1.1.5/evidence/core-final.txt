@@ -1,0 +1,444 @@
+﻿PASS P131-guard-nhom confirmed field guarded
+PASS P131-merge-nhom same differences in merge report
+PASS P131-guard-ma_hieu confirmed field guarded
+PASS P131-merge-ma_hieu same differences in merge report
+PASS P131-guard-mat confirmed field guarded
+PASS P131-merge-mat same differences in merge report
+PASS P131-guard-pt confirmed field guarded
+PASS P131-merge-pt same differences in merge report
+PASS P131-guard-so_tru confirmed field guarded
+PASS P131-merge-so_tru same differences in merge report
+PASS P131-guard-so_mat confirmed field guarded
+PASS P131-merge-so_mat same differences in merge report
+PASS P131-guard-sign_content confirmed field guarded
+PASS P131-merge-sign_content same differences in merge report
+PASS P131-guard-marker_km confirmed field guarded
+PASS P131-merge-marker_km same differences in merge report
+PASS P131-guard-marker_h confirmed field guarded
+PASS P131-merge-marker_h same differences in merge report
+PASS P131-guard-phia_duong confirmed field guarded
+PASS P131-merge-phia_duong same differences in merge report
+PASS P131-guard-route_id confirmed field guarded
+PASS P131-guard-ly_trinh_m confirmed field guarded
+PASS P131-merge-ly_trinh_m same differences in merge report
+PASS P131-guard-ly_trinh_km confirmed field guarded
+PASS P131-merge-ly_trinh_km same differences in merge report
+PASS P131-guard-offset_m confirmed field guarded
+PASS P131-merge-offset_m same differences in merge report
+PASS P131-guard-phia_tuyen confirmed field guarded
+PASS P131-merge-phia_tuyen same differences in merge report
+PASS P131-guard-loai_tuyen confirmed field guarded
+PASS P131-merge-loai_tuyen same differences in merge report
+PASS P131-guard-station_route_revision confirmed field guarded
+PASS P131-merge-station_route_revision same differences in merge report
+PASS P131-guard-trang_thai_km confirmed field guarded
+PASS P131-merge-trang_thai_km same differences in merge report
+PASS P131-guard-station_status confirmed field guarded
+PASS P131-merge-station_status same differences in merge report
+PASS P131-guard-station_source confirmed field guarded
+PASS P131-merge-station_source same differences in merge report
+PASS P131-guard-doan confirmed field guarded
+PASS P131-merge-doan same differences in merge report
+PASS P131-guard-goi confirmed field guarded
+PASS P131-merge-goi same differences in merge report
+PASS P131-guard-station_point_id confirmed field guarded
+PASS P131-merge-station_point_id same differences in merge report
+PASS P131-guard-station_point_method confirmed field guarded
+PASS P131-merge-station_point_method same differences in merge report
+PASS P131-guard-station_point_e confirmed field guarded
+PASS P131-merge-station_point_e same differences in merge report
+PASS P131-guard-station_point_n confirmed field guarded
+PASS P131-merge-station_point_n same differences in merge report
+PASS P131-guard-station_projection_e confirmed field guarded
+PASS P131-merge-station_projection_e same differences in merge report
+PASS P131-guard-station_projection_n confirmed field guarded
+PASS P131-merge-station_projection_n same differences in merge report
+PASS P131-display display does not change survey/result
+PASS P131-route-name import handle remap does not change result
+PASS P131-alias verified package spelling maps to target
+PASS P131-not-alias-segment_id different package meaning cannot alias
+PASS P131-not-alias-package_name different package meaning cannot alias
+PASS P131-not-alias-km_start_m different package meaning cannot alias
+PASS P131-not-alias-km_end_m different package meaning cannot alias
+PASS P131-not-alias-side different package meaning cannot alias
+PASS P131-membership partial package tables cannot establish rename
+PASS P131-ambiguous coexisting spellings cannot alias
+PASS P131-leading-zero package numbers are not guessed
+PASS P131-inputs comparison does not mutate source
+PASS S113-equivalent verified spelling candidates have same meaning
+PASS S113-preserve-used keep referenced old segment without rewriting objects
+PASS S113-both-used both referenced must block
+PASS S113-different-km_start_m different meaning must block
+PASS S113-different-km_end_m different meaning must block
+PASS S113-different-side different meaning must block
+PASS S113-different-package_id different meaning must block
+PASS S113-different-package_name different meaning must block
+PASS S113-route different nonempty route cannot be discarded
+PASS S113-zero do not guess leading zero aliases
+PASS S113-unrelated arbitrary names stay distinct
+PASS S113-idempotent single surviving row has no cleanup
+PASS S113-import preflight blocks new alternate segment key
+PASS S113-repeat same keys remain importable
+PASS S113-numeric numeric spelling is compared safely
+PASS R132-isolated-code-correction isolated-code-correction
+PASS R132-survey-only-counter survey-only-counter
+PASS R132-stable-parent-identity stable-parent-identity
+PASS R132-assignment-separate-survey assignment-separate-survey
+PASS R132-parent-not-timestamp parent-not-timestamp
+PASS R132-patch-forbidden-object_guid patch-forbidden-object_guid
+PASS R132-patch-forbidden-revision_id patch-forbidden-revision_id
+PASS R132-patch-forbidden-progress_locked patch-forbidden-progress_locked
+PASS R132-patch-forbidden-doan patch-forbidden-doan
+PASS R132-patch-forbidden-ly_trinh_m patch-forbidden-ly_trinh_m
+PASS R132-patch-forbidden-pt patch-forbidden-pt
+PASS R132-patch-forbidden-sign_content patch-forbidden-sign_content
+PASS R132-patch-forbidden-mat patch-forbidden-mat
+PASS R132-too-many-faces too-many-faces
+PASS R132-unlocked-not-correction unlocked-not-correction
+PASS R132-multiface-code-rejected multiface-code-rejected
+PASS R132-missing-reason missing-reason
+PASS R132-no-op no-op
+PASS R132-invalid-counter invalid-counter
+PASS R132-lossless-snapshot lossless-snapshot
+PASS R132-ambiguous-lines-no-collision ambiguous-lines-no-collision
+PASS R132-legacy-baseline-exact legacy-baseline-exact
+PASS R132-history-tampering history-tampering
+PASS R132-display-edit-no-survey-write display-edit-no-survey-write
+PASS R132-tracked-guard-ma_hieu tracked-guard-ma_hieu
+PASS R132-tracked-guard-pt tracked-guard-pt
+PASS R132-tracked-guard-doan tracked-guard-doan
+PASS R132-tracked-guard-progress_locked tracked-guard-progress_locked
+PASS R132-tracked-guard-revision_id tracked-guard-revision_id
+PASS R132-tracked-guard-ghi_chu tracked-guard-ghi_chu
+PASS R132-tracked-guard-unknown_field tracked-guard-unknown_field
+PASS R132-tracked-deletion-blocked tracked-deletion-blocked
+PASS M134-new new
+PASS M134-same same
+PASS M134-old-keeps-new old-keeps-new
+PASS M134-descendant-upgrades-not-clock descendant-upgrades-not-clock
+PASS M134-fork fork
+PASS M134-missing-parent missing-parent
+PASS M134-payload-tamper payload-tamper
+PASS M134-same-id-history-tamper same-id-history-tamper
+PASS M134-legacy-not-assumed-same legacy-not-assumed-same
+PASS M134-legacy-never-overwrites legacy-never-overwrites
+PASS M134-duplicate-revision-id duplicate-revision-id
+PASS M134-display-local-does-not-change-survey display-local-does-not-change-survey
+PASS M134-different-project different-project
+PASS M134-different-guid-same-code different-guid-same-code
+PASS M134-tombstone-keeps-lock tombstone-keeps-lock
+PASS M134-tombstone-no-resurrection tombstone-no-resurrection
+PASS M134-ordinary-revive-blocked ordinary-revive-blocked
+PASS M134-tombstone-report-excluded tombstone-report-excluded
+PASS C129a XML and Unicode equivalents match
+PASS C129b report agrees with merge policy
+PASS C129c accent position remains significant
+PASS C129d different sign code rejected
+PASS C129e unknown data not discarded
+PASS C129f unknown version not normalized
+PASS C129g malformed XML not normalized
+PASS C129h report human text
+PASS C129i records preserved
+PASS C129j survey numbers not normalized
+PASS C01a mã hóa ngắn
+PASS C01b giải mã khứ hồi
+PASS C01c chia đoạn 200 ký tự (k= / k+=) | 206 | 207 | 57 | 2
+PASS C01d giải mã đoạn dài
+PASS C01e chuỗi không có '=' bị bỏ qua
+PASS C01f '+=' ghép vào cặp CUỐI (như Lisp)
+PASS C01g khóa '+' đơn không phải nối
+PASS C01h đúng 200 ký tự = 1 đoạn
+PASS C01i0 reject nonpositive chunk size
+PASS C01i-1 reject nonpositive chunk size
+PASS C02a set thay cặp đầu, bỏ cặp trùng
+PASS C02b set thêm cuối
+PASS C02c set-all bỏ cũ thêm cuối
+PASS C02d get khóa thiếu = ""
+PASS C03a fnum giống bht:fnum
+PASS C04a valid-id
+PASS C04b next id không dùng lại số đã xóa (obj_seq)
+PASS C04c next id theo khóa lớn nhất
+PASS C04d next id rỗng
+PASS C04e seq
+PASS C05a tạo hợp lệ
+PASS C05b thứ tự trường giống bht:obj-create + obj-write
+PASS DSP1 chưa gọi thao tác nối tiếp khi EXECUTEFUNCTION chạy
+PASS DSP2 tiếp tục chờ nếu lệnh CAD khác đang chạy
+PASS DSP3 kết thúc đúng một lần khi CAD rảnh
+PASS FILL1 tạo hồ sơ lưu lựa chọn không tô màu
+PASS FILL2 sửa hồ sơ bật lại tô màu
+PASS C05c mặc định TỪ CHỐI điểm đã thuộc hồ sơ khác | điểm đã thuộc đối tượng khác: D-R-000001
+PASS C05d dùng chung chỉ khi xác nhận rõ
+PASS C05e ID đã tồn tại | ID OBJ-000001 đã tồn tại
+PASS C05f điểm không tồn tại (thứ tự như Lisp) | không tìm thấy điểm: X2, X1
+PASS C05g ID không hợp lệ
+PASS C05h sửa: mặt thay toàn bộ, sua_luc
+PASS C05i thêm điểm không trùng
+PASS C05j gỡ điểm
+PASS C06a phát hiện bộ điểm trùng khớp hồ sơ
+PASS C06b điểm chung 2 hồ sơ, không trùng khớp
+PASS C06c owner map
+PASS C07a gắn ảnh 2 chiều
+PASS C07b gắn lại không nhân đôi
+PASS C07c bỏ gắn -> CHUA_GHEP
+PASS C08a đường dẫn tương đối (giống BHTTEST)
+PASS C08b thứ tự ứng viên | D:\moi\a.jpg ; C:\BHT_ANH\photos\origin_photo_0.jpg ; E:\anh\photos\origin_photo_0.jpg ; E:\anh\origin_photo_0.jpg ; E:\anh\photos\origin_photo_0.jpg ; F:\dwg\photos\origin_photo_0.jpg
+PASS C08c resolve chọn ứng viên đầu tiên tồn tại
+PASS C08d không có đường dẫn -> không ứng viên
+PASS C08e GPS 0,0 / không hợp lệ: không có vị trí chụp
+PASS C09a tìm không dấu
+PASS C09b tìm đ -> d
+PASS C09c lọc theo loại
+PASS C09d nhiều từ AND
+PASS C09e rỗng = tất cả
+PASS C10a điểm gần sắp theo khoảng cách
+PASS C10b ảnh gần: bỏ GPS không hợp lệ, gần trước
+PASS C10c fractional radius includes photo beyond integer boundary
+PASS C10d fractional radius below one metre
+PASS C10e invalid radii use default
+PASS C11a hằng phiên bản
+PASS C11b Lisp phải cùng phiên bản
+PASS C11c AssemblyVersion khớp BhtVersion | 1.1.5.0
+PASS C12a đọc XData BHT_PT (nối mô tả, giữ chuỗi gốc)
+PASS C12b XData < 10 phần tử bị bỏ
+PASS C13a đọc trả lời Lisp OK
+PASS C13b đọc trả lời Lisp LOI
+PASS C13c không trả lời = lỗi (không coi là thành công)
+PASS C13d lỗi Lisp rỗng có hướng dẫn
+PASS C14a gợi ý nhóm từ phân loại đã lưu + căn cứ
+PASS C14b group code
+PASS C15a đọc Km và mét
+PASS C15b từ chối lý trình sai
+PASS C15c định dạng giống Lisp
+PASS C113a reject overflowing manual station
+PASS C113b formatter does not throw on extreme input
+PASS C113c reject NaN and infinity station
+PASS C113d representable station boundary
+PASS C113e reject NaN projection distance
+PASS C113f reject NaN station query
+PASS C113g reject infinite extrapolation
+PASS C113h reject duplicate controls before extrapolation
+PASS C113i reject invalid control values
+PASS C113j retain deliberate station break
+PASS C113k control characters produce valid workbook XML
+PASS C113l preserve controls literal escapes and emoji
+PASS C113m failed export preserves existing workbook
+PASS C113n locked export preserves existing workbook
+PASS C113o failed export removes temporary file
+PASS C113p completed export replaces existing workbook
+PASS C16a xlsx có đủ thành phần
+PASS C16b xlsx giữ tiếng Việt có dấu
+PASS C16c mọi phần XML hợp lệ
+PASS C17a bỏ dấu cả đ/Đ, chữ thường
+PASS C17b 'di cham' = 'ĐI CHẬM' (không dấu, không phân biệt hoa) khớp W.245a/W.245b | W.245a,W.245b
+PASS C17c mã bỏ dấu chấm 'w245a' khớp đúng; '245' khớp chuỗi con mã | W.245a / W.245a,W.245b
+PASS C17d khớp theo tên nhiều từ, mọi từ phải có
+PASS C17e truy vấn rỗng = tất cả, giữ thứ tự; giới hạn max
+PASS C17f mã khớp chính xác xếp trước khớp tên
+PASS C17g tên thiếu lấy từ mã cùng thư viện (Biển số E,9a <- R.E,9a); không có nguồn -> để trống | 1 Cấm đỗ xe trong khu vực
+PASS C17h AliasKey
+PASS C17i tìm 'cam do' khớp tên đã bổ sung
+PASS C17n tên trùng khớp hoàn toàn xếp trước tên chỉ chứa cụm từ | R.E,9a
+PASS C17j tách Mã các mặt theo ';' (giữ ',' của mã E,9a)
+PASS C17k từ đang gõ sau ';' và thay bằng mã chọn
+PASS C17l Số mặt tự động = số mã (ô trống / đang là giá trị tự động); nhập tay thì giữ
+PASS C17m Cọc tiêu / Cột Km không có mã biển
+PASS C18a cọc tiêu cách 0.30 m cọc tiêu khác -> trùng (không so với biển báo) | OBJ-000001 (cách 0.30 m (≤ 0.50 m))
+PASS C18b cùng điểm RTK -> trùng, nêu ID điểm
+PASS C18c đã xác nhận dùng chung điểm -> không hỏi lại lý do này
+PASS C18d ngoài ngưỡng / chính nó -> không trùng
+PASS C18e ngưỡng cấu hình được (1.5 m bắt được cọc cách 1.0 m)
+PASS C18f cột Km trùng giá trị Km (khác vị trí)
+PASS C18g nhóm khác (biển báo) không kiểm tra
+PASS C18h không di chuyển / sửa điểm RTK
+PASS C19a danh sách Tình trạng
+PASS C19b giá trị cũ tự do hiển thị nguyên văn; khớp không dấu -> mục chuẩn
+PASS C20a kiểu chữ nhãn biển BHT_BIENBAO = VNRomancUpdate.shx
+PASS C20b nhãn ASCII/có dấu dùng Unicode SHX; thiếu phông dùng Arial
+PASS C20c thư mục Fonts của bundle từ thư mục DLL | C:\A\BHT.bundle\Contents\Fonts
+PASS C20d thêm Support Path chỉ khi chưa có (không phân biệt hoa, bỏ '\' cuối) | C:\X;D:\AutoCAD 2024\Fonts;C:\A\Fonts
+PASS C20e phông TrueType TDT cần cài
+PASS C21P project onto short nonzero segment
+PASS C21Q projection distance matches complete polyline length
+PASS C21A A. Polyline mở | VALID
+PASS C21B B. Polyline kín | 35
+PASS C21C C. StartPoint tại vertex
+PASS C21D D. StartPoint giữa segment
+PASS C21E E. Chiều forward
+PASS C21F F. Chiều reverse
+PASS C21G G. Closed polyline wrap trước điểm đầu | 30
+PASS C21H H. Cọc đều 20 m
+PASS C21I I. Phát hiện một station sai | STATION_JUMP
+PASS C21J J. Station break không nội suy xuyên gãy
+PASS C21K K. Cập nhật Polyline nguồn tăng revision
+PASS C21L L. Đổi chiều tuyến tăng revision
+PASS C21M M. Left/right theo chiều tăng lý trình | LEFT/RIGHT
+PASS C21N N. Offset | 12,5
+PASS C21O O. Route cũ tự migrate mặc định an toàn
+PASS WT1 truck weight canonical decimal
+PASS WT2 legacy truck without weight
+PASS WT3 reject zero negative and malformed weight
+PASS WT4 weight bounds and precision
+PASS WT5 weight isolated from metres and other vehicles
+PASS ZT1 editable hours and legacy comma code
+PASS ZT2 overnight zone hours
+PASS ZT3 reject invalid hours
+PASS ZT4 replace native label only
+PASS ZT5 reject unrelated and duplicate suffix
+PASS SV1 explicit speed wins
+PASS SV2 survey speed
+PASS SV3 Vietnamese accents
+PASS SV4 do not parse dimensions
+PASS SV5 other sign
+PASS SV6 no supplied speed
+PASS SV7 reject overlong number
+PASS SV10 reject invalid explicit speed instead of defaulting
+PASS SV31 lane-speed variants remain separate from numeric speed input
+PASS SV11 accept speed boundaries and surrounding spaces
+PASS SV12 explicit invalid speed cannot use description
+PASS SV13 legacy separators resolve without default speed
+PASS SV26a-DP.134 keep speed sign family
+PASS SV26b-DP.134 speed bounds and invalid input
+PASS SV26a-R.306 keep speed sign family
+PASS SV26b-R.306 speed bounds and invalid input
+PASS FC26 single face, duplicate faces, removal and empty selection
+PASS MV6 reject unsupported and duplicate metre suffix
+PASS TOLL1 toll advance sign distance default and comma
+PASS TOLL2 toll distance validation and sign isolation
+PASS MV8 W239b supports real clearance
+PASS PRES1 new object retains bridge and marker parameters
+PASS PRES2 edit preserves Unicode and linked photos
+PASS PRES3 marker number can be disabled without losing station
+PASS MK1 Km46 H1 derives 46100
+PASS MK2 milestone ignores unused H
+PASS MK3 reject fractional negative or out-of-range markers
+PASS MK4 save derives station and preserves route RTK photo links
+PASS MK5 editing H updates station
+PASS MK6 disabling marker clears only its derived station
+PASS MK7 unrelated manual station preserved
+PASS MK8 new marker derives station without manual entry
+PASS BR1 bridge bottom line matches original sign
+PASS BR2 partial bridge inputs remain usable
+PASS BR3 fractional metres preserved
+PASS MV7 metres never silently round to zero or another value
+PASS MV1 metres decimal comma
+PASS MV2 whole distance text
+PASS MV3 dimension number
+PASS MV4 preserve words and identifiers
+PASS MV5 reject nonpositive and malformed
+PASS SV9 new object keeps custom block
+PASS SV8 clear custom without losing photo
+PASS TC1 mixed Vietnamese
+PASS TC2 survey description
+PASS TC3 NFD equivalent
+PASS TC4 ASCII unchanged
+PASS TC5 all Vietnamese accents
+PASS TC6 null safe
+PASS TC7 records remain Unicode
+PASS CAP-CAP1_1 all faces above clearance
+PASS CAP-GAP-CAP1_1 no overlapping plates
+PASS CAP-CAP1_2 all faces above clearance
+PASS CAP-GAP-CAP1_2 no overlapping plates
+PASS CAP-CAP1_3 all faces above clearance
+PASS CAP-GAP-CAP1_3 no overlapping plates
+PASS CAP-CAP1_4 all faces above clearance
+PASS CAP-GAP-CAP1_4 no overlapping plates
+PASS CAP-CAP1_5 all faces above clearance
+PASS CAP-GAP-CAP1_5 no overlapping plates
+PASS CAP-CAP1_6 all faces above clearance
+PASS CAP-GAP-CAP1_6 no overlapping plates
+PASS CAP-CAP1_7 all faces above clearance
+PASS CAP-GAP-CAP1_7 no overlapping plates
+PASS CAP-CAP1_8 all faces above clearance
+PASS CAP-GAP-CAP1_8 no overlapping plates
+PASS CAP-CAP1_9 all faces above clearance
+PASS CAP-GAP-CAP1_9 no overlapping plates
+PASS CAP-CAP1_10 all faces above clearance
+PASS CAP-GAP-CAP1_10 no overlapping plates
+PASS CAP-ORDER first face top
+PASS CAP-VALID face count and numeric limits
+PASS CAP-SIZE reject infinite width
+PASS CONTENT-ROUNDTRIP Unicode XML and duplicate codes independent
+PASS CONTENT-CODE do not reuse fields on different sign
+PASS CONTENT-INVALID reject unsafe or malformed data
+PASS CONTENT-INVALID reject unsafe or malformed data
+PASS CONTENT-INVALID reject unsafe or malformed data
+PASS CONTENT-INVALID reject unsafe or malformed data
+PASS CONTENT-INVALID reject unsafe or malformed data
+PASS CONTENT-STORE create retains presentation
+PASS CONTENT-EDIT unrelated edit retains all face content
+PASS CONTENT-CODEC long XML roundtrip
+PASS PARAM-UNIT decimal comma preserves metres
+PASS PARAM-ZERO zero distance allowed
+PASS PARAM-PRECISION-LARGE retain every accepted decimal digit
+PASS PARAM-TIME overnight range normalized
+PASS PARAM-TIME1 single hour normalized
+PASS PARAM-PHONE phone treated as text
+PASS PARAM-CODE road code not a numeric label
+PASS PARAM-SPEED per-lane speed uses integers
+PASS PARAM-DIGIT kilometre digit allows zero
+PASS PARAM-SPEED-INVALID reject speed 75.5
+PASS PARAM-SPEED-INVALID reject speed 0
+PASS PARAM-SPEED-INVALID reject speed 131
+PASS PARAM-DIGIT-INVALID reject two-digit value
+PASS PARAM-PRECISION do not round a small distance to zero
+PASS PARAM-INVALID reject number/unit -1
+PASS PARAM-INVALID reject number/unit NaN
+PASS PARAM-INVALID reject number/unit 1 km
+PASS PARAM-INVALID reject number/unit Infinity
+PASS PARAM-INVALID reject invalid hours 24:00
+PASS PARAM-INVALID reject invalid hours 12:60
+PASS PARAM-INVALID reject invalid hours abc
+PASS PKG01 roundtrip exact bytes
+PASS PKG02 temporary payload removed
+PASS PKG03 existing export preserved
+PASS PKG-hash invalid package rejected
+PASS PKG-version invalid package rejected
+PASS PKG-size invalid package rejected
+PASS PKG-extra invalid package rejected
+PASS PKG-dtd invalid package rejected
+PASS PKG-truncated invalid package rejected
+PASS C118a include all five board groups and both faces; exclude markers lights structures
+PASS C118b named board retains title station poles side route and empty code
+PASS C118c multi face installation exports both plates with shared ID
+PASS C118d unknown boards retained without invented station
+PASS C118e XLSX detail includes board station and all faces
+PASS C118f summary reconciles with detail and separates board groups
+PASS SEG119-01 template XLSX roundtrip actual headers and station values
+PASS SEG119-02 native Unicode and route retained; no TSV delimiters
+PASS SEG119-03 invalid overwrite leaves complete original
+PASS SEG119-04 duplicate IDs rejected
+PASS SEG119-05 decimal comma and fractional Km
+PASS SEG119-06-NaN invalid chainage rejected
+PASS SEG119-06-Infinity invalid chainage rejected
+PASS SEG119-06--1 invalid chainage rejected
+PASS SEG119-06-Km48+1000 invalid chainage rejected
+PASS SEG119-06-48.469.10 invalid chainage rejected
+PASS SEG119-06-=1+1 invalid chainage rejected
+PASS SEG119-07 invalid side never becomes both sides
+PASS SEG119-08 native tampering rejected
+PASS SEG119-13 malformed Excel row rejects full workbook with row location
+PASS C124a legacy street name exports default upper line
+PASS C124b street header and name export in face order
+PASS C120a W239a and auxiliary S509a export independently with parameter in content
+PASS C120b auxiliary uses its own catalog group title and five metre content
+PASS C120c both faces retain station route offset segment package and object ID
+PASS C120d two faces one installation without multiplying poles
+PASS C120e export is read-only
+PASS C120f identical physical plates are not deduplicated
+PASS C120g legacy face count follows CAD fallback and speed description
+PASS C120h explicit face list remains authoritative as on CAD
+PASS C120i missing catalog never drops faces
+PASS C120j custom auxiliary keeps its Unicode name and content without raw XML
+PASS C120k invalid content retains all faces and flags review
+PASS C120l content cannot leak across face index
+PASS C120m empty and uncoded installations retained without invented codes
+PASS C120t saved editable clearance overrides default as on actual CAD face
+PASS C120n real workbook counts every primary auxiliary and duplicate face
+PASS C120o workbook auxiliary parameters do not merge five and six metre signs
+PASS C120p workbook installation pole and face totals reconcile
+PASS C120u pole and face totals are numeric Excel cells so SUM works
+PASS C120q all auxiliary detail fields and filter columns present
+PASS C120r offset meaning is included in workbook
+PASS C120s empty export atomically replaces existing workbook
+TONG BHT.CoreTests: 443 PASS, 0 FAIL

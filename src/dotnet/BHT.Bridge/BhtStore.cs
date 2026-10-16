@@ -13,7 +13,7 @@ namespace BHT.Bridge
     /// -> XRECORD (280 . 1) + cac ma DXF 1 "khoa=gia tri" (xem RecordCodec).
     /// Moi ham chay trong Transaction cua nguoi goi.
     /// </summary>
-    public static class BhtStore
+    public static partial class BhtStore
     {
         public const string Root = "BHT_V02";
         public const string BackupSuffix = "__BHT_CU";
@@ -57,8 +57,9 @@ namespace BHT.Bridge
         public static BhtRecord ReadXrecord(Xrecord xr)
         {
             var strings = new List<string>();
-            if (xr.Data != null)
-                foreach (TypedValue tv in xr.Data)
+            using (var data = xr.Data)
+            if (data != null)
+                foreach (TypedValue tv in data)
                     if (tv.TypeCode == 1) strings.Add(Convert.ToString(tv.Value));
             return RecordCodec.Decode(strings);
         }
@@ -96,6 +97,16 @@ namespace BHT.Bridge
         /// </summary>
         public static ObjectId Write(Transaction tr, Database db, string sub, string key, BhtRecord rec)
         {
+            sub=sub.ToUpperInvariant();key=key.ToUpperInvariant();
+            DrawingProject.RequireWritable(tr,db);
+            if(sub=="DRAWING")throw new InvalidOperationException("Dùng quản lý bình đồ để đổi trạng thái.");
+            var stored = Read(tr, db, sub, key);
+            if ((sub == "HISTORY" || sub == "CHANGES" || sub == "LOCAL_HISTORY" || sub == "RELEASES" || sub == "SEG_ALIAS") && stored != null && !ObjectRevision.Same(stored, rec))
+                throw new InvalidOperationException("Lịch sử chỉ được ghi thêm.");
+            if (sub == "META" && stored != null && stored.Get("project_id") != "" && stored.Get("project_id") != rec.Get("project_id"))
+                throw new InvalidOperationException("Không được thay định danh dự án đã có lịch sử.");
+            if (sub == "OBJ" && !ObjectRevision.OrdinaryWriteAllowed(stored, rec))
+                throw new InvalidOperationException("Hồ sơ có lịch sử. Dùng Hiệu chỉnh hồ sơ đã xác nhận.");
             if (sub == "ROUTE" || sub == "SEG") {
                 var previous = Read(tr, db, sub, key);
                 if (previous != null && previous.ToCanonical() != rec.ToCanonical() && All(tr,db,"OBJ").Any(p=>ProgressPolicy.Locked(p.Value)&&p.Value.Get(sub=="ROUTE"?"route_id":"doan")==key))
@@ -106,6 +117,11 @@ namespace BHT.Bridge
                 if (BHT.Core.ProgressPolicy.Locked(previous) && BHT.Core.ProgressPolicy.Changed(previous, rec))
                     throw new InvalidOperationException("Hồ sơ " + key + " đã xác nhận đoạn " + previous.Get("doan") + ". Mở lại đoạn trong Quản lý xử lý theo đoạn trước khi đổi vị trí hoặc lý trình.");
             }
+            return WriteRaw(tr, db, sub, key, rec);
+        }
+
+        private static ObjectId WriteRaw(Transaction tr, Database db, string sub, string key, BhtRecord rec)
+        {
             key = key.ToUpperInvariant();
             string bak = key + BackupSuffix;
             var d = SubDict(tr, db, sub, true);
@@ -120,9 +136,10 @@ namespace BHT.Bridge
             var xr = new Xrecord();
             xr.XlateReferences = false;
             xr.MergeStyle = DuplicateRecordCloning.Ignore; // (280 . 1) nhu Lisp
-            var rb = new ResultBuffer();
-            foreach (var s in RecordCodec.Encode(rec)) rb.Add(new TypedValue(1, s));
-            xr.Data = rb;
+            using (var rb = new ResultBuffer()) {
+                foreach (var s in RecordCodec.Encode(rec)) rb.Add(new TypedValue(1, s));
+                xr.Data = rb;
+            }
             ObjectId oldId = ObjectId.Null;
             if (d.Contains(key)) { oldId = d.GetAt(key); d.SetName(key, bak); }
             var nid = d.SetAt(key, xr);
@@ -138,6 +155,11 @@ namespace BHT.Bridge
 
         public static bool Delete(Transaction tr, Database db, string sub, string key)
         {
+            sub=sub.ToUpperInvariant();key=key.ToUpperInvariant();
+            DrawingProject.RequireWritable(tr,db);
+            if(sub=="DRAWING"||sub=="RELEASES")throw new InvalidOperationException("Không được xóa trạng thái bình đồ/lịch sử phát hành.");
+            if (sub == "HISTORY" || sub == "CHANGES" || sub == "LOCAL_HISTORY" || sub == "SEG_ALIAS" || sub == "META" && (Read(tr,db,sub,key) ?? new BhtRecord()).Get("project_id") != "" || sub == "OBJ" && ObjectRevision.Tracked(Read(tr,db,sub,key)))
+                throw new InvalidOperationException("Không được xóa lịch sử hoặc định danh dự án.");
             if (sub == "OBJ" && ProgressPolicy.Locked(Read(tr,db,sub,key)) || (sub == "ROUTE" || sub == "SEG") && All(tr,db,"OBJ").Any(p=>ProgressPolicy.Locked(p.Value)&&p.Value.Get(sub=="ROUTE"?"route_id":"doan")==key))
                 throw new InvalidOperationException("Dữ liệu đã được xác nhận. Mở lại kết quả đoạn trước khi xóa.");
             var d = SubDict(tr, db, sub, false);

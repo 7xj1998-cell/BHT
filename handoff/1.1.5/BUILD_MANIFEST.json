@@ -1,0 +1,23 @@
+{
+  "baseCommit": "3084a4cef325f5b337dbe6ebe14a8e9a786beb6b",
+  "coreTestsPassed": 443,
+  "version": "1.1.5",
+  "installer": {
+    "bytes": 77486080,
+    "sha256": "645B4475B252EE485AFC7F570DD6A20807DCE3A38ABD7D11992DBD89C05CF554",
+    "file": "BHT-Setup-1.1.5.exe"
+  },
+  "assemblyVersion": "1.1.5.0",
+  "runtime": {
+    "BHT.Bridge.dll": "E1D7295B15495A206E878135D29D4936276BCA20CC475A7FAF62D2E781013C53",
+    "BHT.Core.dll": "D6EBD9E5FEF7E17AB54543C8CAA968F087FF4620220094173AB9A16178D3E1CC",
+    "BHT.Palette.dll": "73809DB3A08D7BBDF8415562F6D562774A9EEEDD698278FF5543541F0B87B2D8",
+    "BHT-1.1.5.fas": "D351E8CCCE411C51574930E2B394D552554C6D7EEE76C10F88096DE11A9FD61C"
+  },
+  "localReleaseContentHash": "57801A0650A2765E664C3AD468C64DBD0025028D938A3FA76DF286CDC164A0EC",
+  "sourceBranch": "releases/source-1.1.5",
+  "publicationNotes": "Existing installer bytes unchanged; README/licensing/handoff added separately. No Autodesk DLLs, field drawings, photos or survey packages in public source.",
+  "knownLegacySignFailures": 11,
+  "distribution": "source-and-existing-runtime-prerelease",
+  "guiAcceptanceComplete": false
+}

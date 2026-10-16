@@ -12,7 +12,7 @@
 (v101-check (equal v101-before (v101-places)) "symbol handle position scale rotation unchanged")
 (v101-check (equal v101-points (bht:pt-all)) "all survey point data unchanged")
 (v101-check (equal v101-objects (bht:rec-all "OBJ")) "all object records unchanged")
-(v101-check (= (bht:meta "symbol_build" "") "1.0.30") "symbol build updated")
+(v101-check (= (bht:meta "symbol_build" "") "1.1.5") "symbol build updated")
 (v101-check (= (car (bht:api-sign-fill "0")) "OK") "upgraded sample fill off")
 (v101-check (= (car (bht:api-sign-fill "1")) "OK") "upgraded sample fill on")
 (close v101-f)

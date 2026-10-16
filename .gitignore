@@ -46,12 +46,12 @@ build-verify.txt
 # Local build transcripts
 /build-*.txt
 
-# Local project data and research output
+# Public source snapshot: exclude survey packages and diagnostic files
 *.bht
-*.xlsx
-*.pdf
 *.err
-*.dxf
-*.png
-*.svg
-
+.env
+.env.*
+*.pem
+*.key
+# Only the reviewed symbol-library fixtures are allowed DWGs
+!assets/light-blocks/*.dwg

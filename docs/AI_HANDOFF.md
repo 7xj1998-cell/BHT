@@ -1,4 +1,47 @@
-﻿## 1.0.29 - 2026-10-14
+﻿## Hiện hành 1.1.5 - layer theo mã tuyến
+
+Đọc HUONG_DAN_HIEU_CHINH_1.1.5 và báo cáo 1.1.5. Baseline ở audit-1.1.5, giữ dirty worktree, không push. RouteLayers xử lý layer native route; đừng đổi toàn bộ MangleName thành Ignore. BHTROUTEWRITE dùng BhtStore guard + layer cùng transaction. ProjectTransfer.ApplyOne dùng khóa cuối/handle đích. Bản cũ chuyển bằng nút có duyệt, không tự khi mở. Giữ layer nguồn. Block layer khóa/viewport/style conflict. Accept native Line cho tương thích Progress125, reject custom TDT. Đã sửa eNoDatabase và CTB plot style; log thất bại giữ để đối chiếu. Layer final 4+18+Undo, real9/canonical/hash, Progress125 13+28+7, M2 50, Core443 đạt. M1/scope/layout đạt trước thay đổi cuối Line. Chưa GUI chuột; 11 signs legacy còn lỗi. Tài liệu1.1.4 ở old có hash; source/docs không sửa cùng version sau package. Trạng thái cài cuối xem D:/lisp/BHT/BHT-HIEN-TAI.md.
+
+## Hiện hành 1.1.4 - giới hạn hình học đầu/cuối tim
+
+Đọc hướng dẫn/báo cáo 1.1.4 và audit-1.1.4. Baseline dirty 1.1.3 đã lưu; không revert/push. Tái hiện 9/16 ca sai: closest point clamp và gán tay bỏ qua phạm vi. route-projection-in-domain chỉ áp vào route-project; không đổi curve-project dùng chọn điểm/hiển thị. Progress-plan luôn kiểm tra khoảng/phía; finish tái lập cùng plan. Không tự audit/sửa khóa khi mở DWG. DOAN15 trên đĩa vẫn 8 khóa D11, hash nguồn không đổi; chưa giải thích ảnh 10 khóa. Cọc Km/H nhập tay không được thay bằng số chiếu khi đối chiếu. Scope-undo đầu thiếu đóng nhóm fixture, đã sửa harness và giữ log thất bại. Scope28+reopen, Core443, M1/M2/UI/Progress125 đạt. Chưa nghiệm thu GUI chuột; 11 lỗi signs legacy chưa sửa. Source/docs sau package bất biến cùng version.
+
+## Hiện hành 1.1.3 — gom đoạn trùng có duyệt
+
+Đọc hướng dẫn/báo cáo 1.1.3 và audit-1.1.3. SegmentDuplicatePolicy + SegmentDuplicates chỉ xóa SEG dư không tham chiếu, giữ mã OBJ đang dùng, lưu SEG_ALIAS append-only. DOAN15 30→15,179OBJ/801RTK/108khóa giữ nguyên, DOAN08/GOI03 vẫn có15khóa. DOAN11/12/13 có ứng viên trỏ cả hai mã bị chặn. Chưa chuẩn hóa mọi mã. Import/SegmentStore chặn new alias trước ghi; CompareRolling dùng chính ImportRolling trên snapshot. Không rewrite OBJ/RTK/ROUTE/CAD hoặc fake revision. Không push. Source/docs sau package bất biến cùng version; kết quả GUI/cài bổ sung ngoài repo trong audit và BHT-HIEN-TAI.
+
+## Hiện hành 1.1.2 — chọn tệp kế thừa
+
+Đọc BAO_CAO_NGHIEM_THU_1.1.2.md và HUONG_DAN_HIEU_CHINH_1.1.2.md. Chọn/dán đường dẫn rồi Kiểm tra và nạp; RollingImportLog trước picker. BHTNAPTICHLUY không Lisp DRAIN. Giữ merge policy và xung đột OBJ-000001. GUI1.1.1 chạy được khi FILEDIA=0; chưa chứng minh nguyên nhân hoặc sửa triệt để freeze. Audit-1.1.2 có baseline/tests. Không push hoặc sửa mã dưới phiên bản đã đóng gói.
+
+## Hiện hành 1.1.1 — sửa bảng và kiểm tra D14/D15
+
+Đọc BAO_CAO_NGHIEM_THU_1.1.1.md, HUONG_DAN_HIEU_CHINH_1.1.1.md và audit-1.1.1. Không đổi chính sách merge để bỏ qua OBJ-000001: D15 đèn tín hiệu/BOT19-R-000144 khác D14 biển P.127-80/BOT1-R-000041. Backend chặn 6 trường trong <1s trên bản sao; GUI đứng chưa xác định nguyên nhân. Tables light theme; deferred Idle modeless conflict; native process handle giữ exit code runner PS5; LP alias đã sửa. Bản đã đóng gói không sửa cùng version. Tài liệu 1.1.0 ở docs/old/1.1.0.
+
+## Hiện hành 1.1.0 - build kiểm tra cục bộ
+
+Đọc BAO_CAO_NGHIEM_THU_1.1.0.md và HUONG_DAN_HIEU_CHINH_1.1.0.md; audit ở D:/lisp/BHT/audit-1.1.0. Giữ dirty worktree và baseline zip 1.0.36. Không push, không thay nội dung bộ cài đã phát hành dưới cùng phiên bản. Phiên bản gói và trạng thái cài thật xem BHT-HIEN-TAI.md ở thư mục BHT.
+
+ReportDialog/ProgressPreview dùng modeless; áp dụng preview qua token một lần, full plan revalidation, đúng Document/dispatcher. Report buffer không cắt còn40 dòng. 06-routes chặn điểm lệch>1m, outward, rebase khi có mốc. 08-signs dùng local tangent + chiều Km, chọn góc trong khung route-up, giữ manual và ANGLE tag; thiếu hướng cảnh báo. Clearance bù nhãn midpoint, chỉ xử lý pending, minimum giữ repeat ổn định. Marker scope theo tim/phạm vi. Snapshot rollback so sánh OBJ/META/CAD, không tuyên bố bao phủ block definitions hoặc crash native.
+
+Tests: 428 unit; 10 regression,269 caption,10 D13+byte reopen, M1/M2/M3/M4/M5 hồi quy đạt,11 D10,23 report,101 grid,3102 palette. run_signs ADS vẫn11 FAIL trùng baseline136; không xóa/sửa để che lỗi, xem báo cáo. Nhánh native TDT probe đã crash, chỉ chạy có cô lập và timeout qua coreconsole.ps1. GUI FrameArrived timed out, giấy phép từng checkout timed out; không nghiệm thu GUI từ Core Console. D13 mới trong New có3 biển+3 cọc cùng DOAN_13; bản thô cũ không có hồ sơ. REOPEN110 dùng hash serialized vì AutoLISP read không nhận snapshot1.5MB.
+
+## Hiện hành 1.0.36, ngày 15/10/2026
+
+Đọc BAO_CAO_NGHIEM_THU_1.0.36 và HUONG_DAN_TEST_TOAN_BO. Các phần M3/M4/M5 đã có bản kiểm tra cục bộ riêng 134/135/136. Không coi toàn bộ roadmap đã nghiệm thu. RevisionMerge/RevisionTransfer giữ ancestry và guard; DrawingPresentation dùng GLOBAL/LOCAL; DrawingProject quản lý bản vẽ/phát hành. Snapshot preview phải dùng SaveAs bBakAndRename=false rồi ReadDwgFile: Wblock bỏ NOD, đã phát hiện trong test, không dùng Wblock làm bản sao dự án. Kiểm tra fingerprint trước apply. Baseline ở audit-1.0.3x; giữ toàn bộ dirty worktree. Xem giới hạn ghi tệp/phát hành, LOCAL và legacy trong báo cáo.
+
+## 1.0.32 - Milestone 2, kiểm tra cục bộ
+
+Đọc MILESTONE_2_ARCHITECTURE.md và old/HUONG_DAN_HIEU_CHINH_1.0.32.md. ObjectCorrection có preview bất biến, writer riêng, HISTORY/CHANGES, guard C#/Lisp, native Undo + journal. Không bọc Lisp tạo block trong transaction .NET: thử nghiệm đó gây lỗi native và đã loại. Có test fault sau cập nhật CAD, U/REDO, bản sao D10, export/import/reopen. Chưa nghiệm thu GUI, chưa hoàn tất mọi loại sửa phức tạp trong M2. M3 phải thay chốt chặn rolling có lịch sử bằng chính sách ancestry thống nhất preflight/thực thi; tuyệt đối không bỏ chốt rồi dựa timestamp. Audit đầy đủ tại D:/lisp/BHT/audit-1.0.32. Không push; giữ baseline dirty worktree.
+## 1.0.31 - 2026-10-15, Milestone 1 cục bộ
+
+Đọc MILESTONE_1_ARCHITECTURE.md, RELEASE_NOTES_1.0.31.md và BAO_CAO_MILESTONE_1_1.0.31.md trước. Source/Git root hiện hành là D:/lisp/BHT/sharing-0654/source, nhánh development/incremental-confirmation; không push. Baseline 1.0.30 được đối chiếu với checkout cục bộ 3084a4c trước khi sửa; các khác biệt có sẵn được lưu trong audit-1.0.31/baseline.*.
+
+progress-plan bỏ chặn cả đoạn, kiểm tra bằng chứng hồ sơ khóa và chỉ cập nhật pending. progress-finish ghi snapshot mới cho pending; no-op không ghi dữ liệu. Chính sách gói và kết quả dùng chung trước/trong nạp; route reuse có kiểm tra. Copy bật Undo recording cho side database để abort thực sự phục hồi. Nonfinite snapshot bị chặn. Không có lịch sử đối tượng, revision ancestry hoặc đồng bộ trình bày trong bản này.
+
+Hướng dẫn cũ ở docs/old; HTML cũ và bản build cũ được quản lý theo LICH_SU_TAI_LIEU.md và nhật ký cleanup của audit-1.0.31. Giữ mã hồi quy, không giữ profile/test DWG sinh lại được. Mỗi tính năng tiếp theo phải có hướng dẫn phiên bản mới theo AGENTS.md.
+
+## 1.0.29 - 2026-10-14
 
 Sửa bad function: 1.51086 do biến angle che hàm AutoLISP trong bố trí hàng loạt. Nhãn báo hiệu theo đoạn dẫn dài: mã/biển phụ trên, lý trình dưới; hai trụ dùng đường dẫn phía trên. Thêm BHTMAUNHAN để áp dụng cho nhãn kéo tay mà giữ hình biển. Đối chiếu sign_content theo mô hình XML hợp lệ/NFC và hiển thị văn bản; HÒA và HOÀ vẫn khác.
 
@@ -35,11 +78,11 @@ BHTGANDOAN mở bảng chọn mã đoạn/gói, tên công trình, khoảng Km, 
 I.449 có HEADER (mặc định ĐƯỜNG) phía trên và NAME phía dưới, căn giữa trong mặt biển, giữ dữ liệu NAME cũ và xuất đủ hai dòng. Kiểm tra DWG đoạn 10: OBJ-000058 lưu PHAI trong khi DOAN_10 là TRAI; TIMRANHD10 còn khai báo TIM_DUONG, bảng đoạn chưa gắn tim. Giữ nguyên bản vẽ gốc, kiểm tra trên bản sao.
 # Cập nhật 1.0.23 — 14/10/2026
 
-RouteForms.cs cung cấp BHTROUTEOPTIONS/BHTROUTEMARKS qua LispFunction: form chọn loại/numeric validation và bảng chọn mốc. 06-routes dùng chung route-options cho nạp Polyline/TDT và sửa tuyến; Core Console trả SKIP cho UI, có CLI dự phòng. BHTDSMOC trả mã raw-row để xóa đúng sau sắp xếp, kiểm tra snapshot, rollback và Undo; VIEW đổi dist theo start/direction rồi vẽ dấu cộng/circle tạm đúng tâm. Mốc tự động có index âm, không xóa tại bảng. Route123 31 Lisp/command +24 UI, Undo/reopen, fake TDT adapter để kiểm tra loại; không chứng minh native TDT trong ảnh. Đọc RELEASE_NOTES_1.0.23.md và BAO_CAO_NGHIEM_THU_1.0.23.md. Nguồn trước sửa ở audit-1.0.23/source-before-1.0.23.zip.
+RouteForms.cs cung cấp BHTROUTEOPTIONS/BHTROUTEMARKS qua LispFunction: form chọn loại/numeric validation và bảng chọn mốc. 06-routes dùng chung route-options cho nạp Polyline/TDT và sửa tuyến; Core Console trả SKIP cho UI, có CLI dự phòng. BHTDSMOC trả mã raw-row để xóa đúng sau sắp xếp, kiểm tra snapshot, rollback và Undo; VIEW đổi dist theo start/direction rồi vẽ dấu cộng/circle tạm đúng tâm. Mốc tự động có index âm, không xóa tại bảng. Route123 31 Lisp/command +24 UI, Undo/reopen, fake TDT adapter để kiểm tra loại; không chứng minh native TDT trong ảnh. Đọc old/RELEASE_NOTES_1.0.23.md và old/BAO_CAO_NGHIEM_THU_1.0.23.md. Nguồn trước sửa ở audit-1.0.23/source-before-1.0.23.zip.
 
 # Cập nhật 1.0.22 — 14/10/2026
 
-Đọc RELEASE_NOTES_1.0.22.md và BAO_CAO_NGHIEM_THU_1.0.22.md trước. Workflow122 bảo vệ phân biệt nhập nguyên dự án và nhập khảo sát theo tim đích; TDT dùng ROUTE_ONLY từ khi mới tạo và không lấy số cọc khảo sát. Tdt91Stakes bỏ toàn bộ hiển thị BHT trước khi đọc TEXT/block. ProjectTransfer sửa identity trong geometry_signature, giữ thân signature để bắt thay đổi hình học; remap XData nguồn TDT. Nút bố trí theo sáu bước, phương pháp FIELD ở mục riêng. Filebaohieu.bht gốc: 179OBJ/1ROUTE/0SEG. Gói bổ sung bảng xuất riêng, giữ gốc.
+Đọc old/RELEASE_NOTES_1.0.22.md và old/BAO_CAO_NGHIEM_THU_1.0.22.md trước. Workflow122 bảo vệ phân biệt nhập nguyên dự án và nhập khảo sát theo tim đích; TDT dùng ROUTE_ONLY từ khi mới tạo và không lấy số cọc khảo sát. Tdt91Stakes bỏ toàn bộ hiển thị BHT trước khi đọc TEXT/block. ProjectTransfer sửa identity trong geometry_signature, giữ thân signature để bắt thay đổi hình học; remap XData nguồn TDT. Nút bố trí theo sáu bước, phương pháp FIELD ở mục riêng. Filebaohieu.bht gốc: 179OBJ/1ROUTE/0SEG. Gói bổ sung bảng xuất riêng, giữ gốc.
 
 # Cập nhật bàn giao 1.0.21 - 14/10/2026
 
@@ -56,7 +99,7 @@ Sửa báo cáo Excel thiếu biển phụ tại SignReportRecords và SignRepor
 Ưu tiên RELEASE_NOTES_1.0.19 và BAO_CAO_NGHIEM_THU_1.0.19. SegmentTable.cs (Core) đọc XLSX/TSV cũ, kiểm tra và lưu BHTSEG/1 (.bhtseg ZIP XML/SHA256); SegmentStore.cs (Bridge) áp dụng atomic và bỏ gán cũ; SegmentTableForm.cs (Palette) xem trước/sửa/gán tim. 07-segments.lsp tính trên từng route_id trong SEG, độc lập station_active_route. 06-routes.lsp giữ tim riêng khi tính chung/riêng hoặc chế độ cọc, đổi tên cập nhật SEG. Thiếu tim/mốc chặn phân đoạn; không fallback. Kh-display-transaction hoàn tác cả kết quả LOI lẫn exception. Core C#5, AutoCAD2024; bảo toàn các sửa nhãn/bảng tổng hợp 1.0.18. Bộ thử mới: Segment119 Core, SEG119 Lisp+Store+Undo/reopen/.bht transfer, và 7 ca Palette mới. Không tự suy mã gói thực tế: GOI_01…03 là mã sinh từ tên nhóm Excel và hiện trước khi áp dụng.
 # Cập nhật bàn giao 1.0.14 - 14/10/2026
 
-Ưu tiên [ghi chú 1.0.14](RELEASE_NOTES_1.0.14.md), [kiểm chứng](BAO_CAO_NGHIEM_THU_1.0.14.md) và [rà soát nghiệp vụ](RA_SOAT_KY_THUAT_1.0.14.md). Cọc tiêu giữ chân tại điểm đo, vuông góc tuyến, không có đường nối; tách khỏi cách bố trí biển báo. Bộ rộng run_signs chưa đạt, có đối chiếu 1.0.13; xem giới hạn nghiệm thu. Nội dung bên dưới là lịch sử trước bản này.
+Ưu tiên [ghi chú 1.0.14](old/RELEASE_NOTES_1.0.14.md), [kiểm chứng](old/BAO_CAO_NGHIEM_THU_1.0.14.md) và [rà soát nghiệp vụ](RA_SOAT_KY_THUAT_1.0.14.md). Cọc tiêu giữ chân tại điểm đo, vuông góc tuyến, không có đường nối; tách khỏi cách bố trí biển báo. Bộ rộng run_signs chưa đạt, có đối chiếu 1.0.13; xem giới hạn nghiệm thu. Nội dung bên dưới là lịch sử trước bản này.
 
 # Bàn giao BHT 1.0.13 cho AI/người phát triển tiếp theo
 
@@ -120,3 +163,6 @@ Các script chính: tests/IntegrationTests/run_bootstrap653.ps1, run_palette_lay
 - Hoàn tất code, test và tài liệu trước package: RELEASE_STATE.json chặn đóng gói lại cùng phiên bản với nội dung đã đổi.
 - Không đưa kết quả build, DLL Autodesk, dữ liệu người dùng hoặc bản sao tài nguyên vendor lên repo.
 - Kho hiện chưa có LICENSE riêng cho mã BHT; công khai để đọc không thay thế việc lựa chọn giấy phép phân phối/tái sử dụng.
+## 1.0.35 - Sửa bảng hiệu chỉnh
+
+Đã tái hiện 30 lỗi chiều cao tiêu đề trên DLL 1.0.32; sửa Grid/AutoSize trong ObjectCorrectionForm, 101 kiểm tra bảng mới đạt. Runtime protected cuối đạt 101 bảng + 50 hiệu chỉnh; UI cũ 19, CoreTests 410. Audit tại D:/lisp/BHT/audit-1.0.35. Hướng dẫn test A-O: HUONG_DAN_TEST_TOAN_BO.md. Tiếp tục ROADMAP_EXECUTION.md, chưa bỏ chốt rolling có lịch sử.

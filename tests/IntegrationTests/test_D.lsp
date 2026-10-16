@@ -1,9 +1,9 @@
-﻿;;; BHT 1.0.30 - phien D: tich hop thu vien bien bao TDTSolution 9.1 ban thuong.
+﻿;;; BHT 1.1.5 - phien D: tich hop thu vien bien bao TDTSolution 9.1 ban thuong.
 (load "C:/Users/Le Bao/BHT_TEST_V044/t_common.lsp")
 (vl-load-com)
 (tbegin "D")
 (setq e (tload))
-(tchk "D00" "nạp BHT-5.0" (and (null e) (= *bht-version* "1.0.30")) e)
+(tchk "D00" "nạp BHT-5.0" (and (null e) (= *bht-version* "1.1.5")) e)
 (setq nc (t-netload "BHT.Core.dll") nb (t-netload "BHT.Bridge.dll"))
 (tchk "D01" "NETLOAD Core + Bridge 5.0" (and (null nc) (null nb)) (list nc nb))
 (setq st (vl-catch-all-apply 'BHTTDT91STATUS nil))

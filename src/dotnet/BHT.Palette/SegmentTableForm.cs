@@ -62,7 +62,22 @@ namespace BHT.Palette
                 using (var tr = doc.Database.TransactionManager.StartOpenCloseTransaction()) routes = BhtStore.All(tr, doc.Database, "ROUTE").ToDictionary(p => p.Key, p => p.Value);
                 using (var form = new SegmentTableForm(rows, routes, path, note, import))
                 {
-                    if (form.ShowDialog() != DialogResult.OK) return;
+                    if(!import)form.CheckDuplicates=()=>{
+                        var preview=SegmentDuplicates.Preview(doc.Database);
+                        if(preview.Removable==0&&preview.Blocked==0){MessageBox.Show(form,"Không tìm thấy cặp mã đoạn khác cách viết.","BHT");return false;}
+                        using(var review=new SegmentDuplicateReviewForm(preview)){
+                            if(AcApp.ShowModalDialog(review)!=DialogResult.OK)return false;
+                        }
+                        if(AcApp.DocumentManager.MdiActiveDocument!=doc)throw new InvalidOperationException("Bản vẽ đã đổi. Chưa gom đoạn.");
+                        using(doc.LockDocument()){
+                            int n=SegmentDuplicates.Apply(doc.Database,preview);doc.Editor.WriteMessage("\nBHT: đã gom "+n+" dòng đoạn không tham chiếu; giữ nguyên hồ sơ/RTK/tim. Đóng bảng rồi dùng Undo để hoàn tác trước khi lưu.");
+                        }
+                        return true;
+                    };
+                    form.DuplicatesRequested=false;
+                    var answer=form.ShowDialog();
+                    if(form.DuplicatesRequested){Open(doc,false);return;}
+                    if (answer != DialogResult.OK) return;
                     if (AcApp.DocumentManager.MdiActiveDocument != doc) throw new InvalidOperationException("Bản vẽ đã thay đổi; chưa áp dụng bảng.");
                     string filePath = form.NativePath;
                     if (filePath != "") SegmentTable.Write(filePath, form.Result);
@@ -85,39 +100,60 @@ namespace BHT.Palette
         readonly string[] fields = { "segment_id", "package_id", "km_start_m", "km_end_m", "side", "route_id", "package_name", "note" };
         public List<BhtRecord> Result;
         public string NativePath = "";
+        public Func<bool> CheckDuplicates;
+        public bool DuplicatesRequested;
 
         public SegmentTableForm(List<BhtRecord> rows, Dictionary<string, BhtRecord> routes, string path, string notes, bool import)
         {
             this.routes = routes; source = path;
             converting = import && !Path.GetExtension(path).Equals(".bhtseg", StringComparison.OrdinalIgnoreCase);
-            Text = "BHT — Đoạn / gói thầu và tim tham chiếu"; Width = 1180; Height = 650; MinimumSize = new Size(760, 460);
-            Font = new Font("Segoe UI", 9f); StartPosition = FormStartPosition.CenterParent;
+            Text = "BHT — Đoạn / gói thầu và tim tham chiếu"; Width = 1280; Height = 760; MinimumSize = new Size(820, 600);
+            AutoScaleMode = AutoScaleMode.Dpi; StartPosition = FormStartPosition.CenterParent;
             var layout = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 4, ColumnCount = 1, Padding = new Padding(10) };
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 80)); layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.Controls.Add(new Label { AutoSize = true, MaximumSize = new Size(1080, 0), Text = "Mỗi đoạn dùng một tim đã khai báo: tim đường, tim rãnh hoặc tuyến khác. Để trống = dùng lý trình hiện có. Phía trái/phải theo chiều tăng lý trình của tim. Các đoạn cùng mốc biên được báo để chọn thủ công." }, 0, 0);
+            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize)); layout.RowStyles.Add(new RowStyle(SizeType.Percent, 100)); layout.RowStyles.Add(new RowStyle(SizeType.Absolute, 100)); layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            layout.Controls.Add(new Label { AutoSize = true, Dock = DockStyle.Fill, Padding = new Padding(0, 0, 0, 8), Text = "Đoạn / gói thầu • " + rows.Count + " dòng\r\nChọn tim ở từng dòng hoặc chọn nhiều dòng để gán tim chung. Lý trình nhận mét hoặc Km0+000. Phía trái/phải theo chiều tăng lý trình." }, 0, 0);
             grid.Dock = DockStyle.Fill; grid.AllowUserToAddRows = false; grid.AllowUserToDeleteRows = false; grid.RowHeadersVisible = false; grid.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
             grid.SelectionMode = DataGridViewSelectionMode.FullRowSelect; grid.MultiSelect = true; grid.BackgroundColor = Color.White;
-            string[] labels = { "Mã đoạn", "Mã gói", "Lý trình đầu (m / Km)", "Lý trình cuối (m / Km)", "Phía", "Tim của đoạn", "Tên gói", "Ghi chú" };
+            grid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            grid.DefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            string[] labels = { "Mã đoạn", "Mã gói", "Lý trình đầu\n(m / Km)", "Lý trình cuối\n(m / Km)", "Phía tuyến", "Tim tham chiếu", "Tên gói thầu", "Ghi chú" };
+            int[] widths = { 110, 100, 155, 155, 120, 240, 180, 180 };
             for (int i = 0; i < fields.Length; i++)
             {
                 DataGridViewColumn col;
                 if (fields[i] == "side")
                 {
-                    var c = new DataGridViewComboBoxColumn(); c.Items.AddRange("HAI_BEN", "TRAI", "PHAI"); col = c;
+                    var c = new DataGridViewComboBoxColumn { DisplayMember = "Label", ValueMember = "Id", DataSource = new List<RouteChoice> {
+                        new RouteChoice { Id = "HAI_BEN", Label = "Hai bên" }, new RouteChoice { Id = "TRAI", Label = "Trái" }, new RouteChoice { Id = "PHAI", Label = "Phải" } } }; col = c;
                 }
                 else if (fields[i] == "route_id")
                 {
                     var c = new DataGridViewComboBoxColumn { DisplayMember = "Label", ValueMember = "Id", DataSource = RouteChoices(rows, routes) }; col = c;
                 }
                 else col = new DataGridViewTextBoxColumn();
-                col.Name = fields[i]; col.HeaderText = labels[i]; col.Width = i == 5 ? 230 : (i >= 6 ? 220 : 130); col.SortMode = DataGridViewColumnSortMode.NotSortable; grid.Columns.Add(col);
+                col.Name = fields[i]; col.HeaderText = labels[i]; col.MinimumWidth = widths[i]; col.FillWeight = widths[i]; col.SortMode = DataGridViewColumnSortMode.NotSortable; grid.Columns.Add(col);
             }
             foreach (var rec in rows) { int i = grid.Rows.Add(fields.Select(f => (object)rec.Get(f)).ToArray()); grid.Rows[i].Tag = rec.Clone(); }
-            grid.DataError += (s, e) => { e.ThrowException = false; grid.Rows[e.RowIndex].ErrorText = "Giá trị không hợp lệ. Chọn lại phía hoặc tim."; };
+            grid.DataError += (s, e) => { e.ThrowException = false; if(e.RowIndex >= 0 && e.RowIndex < grid.Rows.Count) grid.Rows[e.RowIndex].ErrorText = "Giá trị không hợp lệ. Chọn lại phía hoặc tim."; };
             layout.Controls.Add(grid, 0, 1);
             var info = new TextBox { Dock = DockStyle.Fill, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Text = rows.Count + " đoạn. " + notes + "\r\nTim chưa có trong bản vẽ sẽ hiện [THIẾU TIM]; cần khai báo hoặc chọn lại. Phân tự động chọn tim phù hợp gần nhất; hai tim lệch nhau không quá 1 cm cần chọn đoạn thủ công. Khi áp dụng, gán tự động cũ được xóa để phân lại; gán tay giữ nếu phạm vi và tim không đổi." };
             layout.Controls.Add(info, 0, 2);
             var actions = new FlowLayoutPanel { AutoSize = true, Dock = DockStyle.Fill, WrapContents = true };
+            if(!import){
+                var duplicates=new Button {Text="Kiểm tra / gom đoạn trùng…",AutoSize=true};
+                duplicates.Click+=(s,e)=>{
+                    try {
+                        grid.EndEdit();
+                        if(grid.Rows.Cast<DataGridViewRow>().Any(row=>fields.Any(field=>Convert.ToString(row.Cells[field].Value)!=((BhtRecord)row.Tag).Get(field)))){
+                            MessageBox.Show(this,"Bảng có ô đang sửa. Hủy bảng và mở lại để kiểm tra đoạn trùng trên dữ liệu đã lưu; các sửa đổi chưa áp dụng chưa được dùng để gom.","BHT — hoàn tất sửa bảng trước",MessageBoxButtons.OK,MessageBoxIcon.Information);return;
+                        }
+                        if(CheckDuplicates!=null&&CheckDuplicates()){
+                            DuplicatesRequested=true;DialogResult=DialogResult.Cancel;Close();
+                        }
+                    }catch(System.Exception ex){MessageBox.Show(this,ex.Message,"BHT — giữ nguyên bảng",MessageBoxButtons.OK,MessageBoxIcon.Warning);}
+                };
+                actions.Controls.Add(duplicates);
+            }
             var applyRoute = new ComboBox { Width = 270, DropDownStyle = ComboBoxStyle.DropDownList, DisplayMember = "Label", ValueMember = "Id", DataSource = RouteChoices(new List<BhtRecord>(), routes) };
             actions.Controls.Add(applyRoute);
             var bind = new Button { Text = "Gán tim cho các dòng chọn", AutoSize = true };
@@ -128,6 +164,7 @@ namespace BHT.Palette
             if (!converting) { var apply = new Button { Text = "Áp dụng vào bản vẽ", AutoSize = true }; apply.Click += (s, e) => Complete(false); actions.Controls.Add(apply); }
             var cancel = new Button { Text = "Hủy", DialogResult = DialogResult.Cancel, AutoSize = true }; actions.Controls.Add(cancel); CancelButton = cancel;
             layout.Controls.Add(actions, 0, 3); Controls.Add(layout);
+            PaletteTheme.ApplyTableDialog(this);
         }
         public sealed class RouteChoice { public string Id { get; set; } public string Label { get; set; } }
         static List<RouteChoice> RouteChoices(List<BhtRecord> rows, Dictionary<string, BhtRecord> routes)

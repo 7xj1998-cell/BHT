@@ -336,7 +336,10 @@ namespace BHT.Palette
 
         protected void ShowReportDialog(string title, string content)
         {
-            using (var dialog = new ReportDialog(title, content, Status, s => StatusError(s))) dialog.ShowDialog();
+            var document = AcApp.DocumentManager.MdiActiveDocument;
+            var dialog = new ReportDialog(title + (document == null ? "" : " — " + System.IO.Path.GetFileName(document.Name)), content,
+                s => { if (!IsDisposed) Status(s); }, s => { if (!IsDisposed) StatusError(s); });
+            AcApp.ShowModelessDialog(dialog);
         }
 
         /// <summary>Dua viec ve luong giao dien, sau khi callback AutoCAD ket thuc (tranh tai nhap).</summary>
@@ -392,6 +395,8 @@ namespace BHT.Palette
                 UpdateSignFillAvailability();
                 if (r.Ok) Status(fn=="bht:api-field-input-preview" ? "Đã đọc cọc đã nhập để kiểm tra." : label + ": xong. " + string.Join("; ", r.Values.Take(8).ToArray()));
                 else StatusError(label + ": LỖI - " + r.Error);
+                if(r.Ok&&r.Values.Any(v=>v.StartsWith("warning=",StringComparison.Ordinal)))
+                    ShowReportDialog(label,string.Join("\r\n",r.Values.ToArray()));
                 if (after != null) after(r);
                 RefreshAll(false);
             }));
@@ -407,12 +412,29 @@ namespace BHT.Palette
                 if (r.Ok) Status("Đang chạy " + cmd + "… Xem kết quả tại dòng lệnh CAD (F2)."); else StatusWarn(r.ToString());
             };
             // Bo cac dong thong bao con lai tu lenh truoc, roi moi gui lenh moi.
-            if (IsSelectionCommand(cmd)) send();
+            if (IsSelectionCommand(cmd) || IsNativeTransferCommand(cmd)) send();
             else AcadDispatcher.RunLisp("bht:api-messages", new[] { "DRAIN" }, r => UI(send));
         }
 
         private void OnCommandFinished(string cmd, string state)
         {
+            // Transfer reports belong to .NET, not the Lisp message buffer. Calling
+            // acedInvoke/DRAIN here re-enters CAD while the transfer report opens.
+            if(IsNativeTransferCommand(cmd)) {
+                var document = _doc;
+                EventHandler idle = null;
+                idle = (s,e) => {
+                    if(document==AcadDispatcher.ActiveDocument && AcadDispatcher.ActiveCommands(document)!="")return;
+                    AcApp.Idle -= idle;
+                    if(document!=_doc || document!=AcadDispatcher.ActiveDocument || IsDisposed)return;
+                    RollingImportLog.Note("Làm mới Palette sau khi lệnh nạp kết thúc");
+                    RefreshAll(false);
+                    Status("Đã kết thúc xử lý nạp. Xem kết quả tại dòng lệnh CAD (F2) và bảng đối chiếu nếu có.");
+                    RollingImportLog.Note("Đã làm mới Palette");
+                };
+                AcApp.Idle += idle;
+                return;
+            }
             UI(() =>
             {
                 if (IsSelectionCommand(cmd))
@@ -462,6 +484,11 @@ namespace BHT.Palette
                     if (report && detail != "") ShowReportDialog(head, detail);
                 })));
             });
+        }
+
+        internal static bool IsNativeTransferCommand(string command)
+        {
+            return string.Equals(command,"BHTNAPTICHLUY",StringComparison.OrdinalIgnoreCase);
         }
 
         internal static bool IsSelectionCommand(string command)

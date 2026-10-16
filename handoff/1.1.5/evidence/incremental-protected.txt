@@ -1,0 +1,65 @@
+﻿PASS INCREMENTAL131 fixture-25-confirmed
+PASS INCREMENTAL131 incremental-plan-selects-only-026
+PASS INCREMENTAL131 preview-is-read-only
+PASS INCREMENTAL131 026-calculated
+PASS INCREMENTAL131 026-confirmed
+PASS INCREMENTAL131 25-records-canonical-unchanged
+PASS INCREMENTAL131 rtk-and-route-unchanged
+PASS INCREMENTAL131 no-duplicates-or-other-segment-write
+PASS INCREMENTAL131 empty-calculation-no-writes
+PASS INCREMENTAL131 repeat-confirmation-no-writes
+PASS INCREMENTAL131 calculation-rollback-after-first-write
+PASS INCREMENTAL131 stale-preview-rejected-without-overwrite
+PASS INCREMENTAL131 confirmation-rollback-restores-locks-and-snapshots
+PASS INCREMENTAL131 moved-confirmed-point-blocks-addition
+PASS INCREMENTAL131 edited-route-blocks-addition
+PASS INCREMENTAL131 changed-controls-with-same-revision-blocked
+PASS INCREMENTAL131 guard-sign_content
+PASS INCREMENTAL131 guard-so_mat
+PASS INCREMENTAL131 guard-station_point_method
+PASS INCREMENTAL131 guard-doan
+PASS INCREMENTAL131 guard-goi
+PASS INCREMENTAL131 guard-ma_hieu
+PASS INCREMENTAL131 finish-validates-projection
+PASS INCREMENTAL131 old25-still-unchanged-after-errors
+PASS INCREMENTAL131 manual-symbol-and-label-unchanged
+PASS INCREMENTAL131 legacy-explicit-controls-allow-addition
+PASS INCREMENTAL131 legacy-confirmations-never-silently-backfilled
+INCREMENTAL131-LISP=27 FAIL=0
+PASS INCREMENTAL131 public-mixed-segment-calculated"\nPASS INCREMENTAL131 public-mixed-segment-calculated"
+PASS INCREMENTAL131 one-undo-restores-mixed-segment"\nPASS INCREMENTAL131 one-undo-restores-mixed-segment"
+PASS INCREMENTAL131 public-mixed-segment-confirmed"\nPASS INCREMENTAL131 public-mixed-segment-confirmed"
+PASS INCREMENTAL131 one-undo-restores-incremental-confirmation"\nPASS INCREMENTAL131 one-undo-restores-incremental-confirmation"
+INCREMENTAL131-UNDO=31 FAIL=0"\nINCREMENTAL131-UNDO=31 FAIL=0"
+PASS INCREMENTAL131 export-keeps-source-canonical
+PASS INCREMENTAL131 save-reopen-canonical
+PASS INCREMENTAL131 nonfinite-confirmed-coordinate-rejected-1
+PASS INCREMENTAL131 nonfinite-confirmed-coordinate-rejected-2
+PASS INCREMENTAL131 nonfinite-confirmed-coordinate-rejected-3
+PASS INCREMENTAL131 dotnet-case-insensitive-guard-ma_hieu
+PASS INCREMENTAL131 dotnet-case-insensitive-guard-doan
+PASS INCREMENTAL131 dotnet-case-insensitive-guard-goi
+PASS INCREMENTAL131 dotnet-case-insensitive-guard-so_mat
+PASS INCREMENTAL131 dotnet-case-insensitive-guard-sign_content
+PASS INCREMENTAL131 dotnet-case-insensitive-guard-station_point_method
+PASS INCREMENTAL131 verified-package-alias-repeat
+PASS INCREMENTAL131 new-object-package-agrees-with-seg
+PASS INCREMENTAL131 repeat-addition-is-idempotent
+PASS INCREMENTAL131 dotnet-write-fault-rolls-back
+PASS INCREMENTAL131 confirmed-addition-reuses-bound-route
+PASS INCREMENTAL131 confirmed-addition-keeps-existing-locked-record
+PASS INCREMENTAL131 confirmed-addition-reexports
+PASS INCREMENTAL131 package-change-with-other-scope-blocked-atomically
+PASS INCREMENTAL131 import-failure-after-erasure-restores-cad
+PASS INCREMENTAL131 import-failure-restores-records-and-undo-mode
+PASS INCREMENTAL131 ui-incremental-calculate-False
+PASS INCREMENTAL131 ui-finish-only-pending-False
+PASS INCREMENTAL131 ui-export-only-fully-confirmed-False
+PASS INCREMENTAL131 ui-reject-different-route-False
+PASS INCREMENTAL131 ui-incremental-calculate-True
+PASS INCREMENTAL131 ui-finish-only-pending-True
+PASS INCREMENTAL131 ui-export-only-fully-confirmed-True
+PASS INCREMENTAL131 ui-reject-different-route-True
+INCREMENTAL131-DOTNET=29 FAIL=0
+Evidence: D:\lisp\BHT\sharing-0654\source\build\v1.1.5\incremental131-ac1dab9fb8504b3badc576067c3fe0ef
+PASS INCREMENTAL131 reopened DWG no-op

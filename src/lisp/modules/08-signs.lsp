@@ -449,8 +449,9 @@
 
 ;; Xoa ky hieu (INSERT + TEXT mang BHT_KH) cua 1 ho so; oid nil = xoa MOI ky hieu BHT.
 (defun bht:symbol-delete (oid / ss i ent x n app)
+  (bht:require-working-drawing)
   (setq n 0)
-  (foreach app '("BHT_KH" "BHT_SIGN_ORIGIN")
+  (foreach app '("BHT_KH" "BHT_SIGN_ORIGIN" "BHT_OFFSET_DIM")
     (setq ss (ssget "_X" (list (list -3 (list app)))) i 0)
     (if ss
       (while (< i (sslength ss))
@@ -514,11 +515,59 @@
         (if last-segment (setq segments (cons last-segment segments))))))
   segments)
 
-(defun bht:kh-caption-leader-layout (layout anchor / rec segments segment center count dx dy a rot rows h height width tb value normal extent selected candidate best)
+;; View convention: increasing chainage points up the page. The reader's right
+;; is the clockwise normal. Keep the leader axis, choose only its 180-degree branch.
+(defun bht:kh-caption-direction-clear-p (marks dist / a b c ok)
+  (setq ok T)
+  (while (caddr marks)
+    (setq a (car marks) b (cadr marks) c (caddr marks))
+    ;; At a turning station equation neither adjacent interval owns the heading.
+    (if (and (equal dist (car b) 1e-6)
+             (<= (* (- (cadr b) (caddr a)) (- (cadr c) (caddr b))) 0.0))
+      (setq ok nil))
+    (setq marks (cdr marks)))
+  ok)
+
+(defun bht:kh-caption-route-angle (rec / route ent index source pr controls km param tangent dir cached)
+  (if (and (= (bht:get rec "nhom") "BIEN_BAO")
+           (member (bht:get rec "station_source") '("" "ROUTE"))
+           (setq route (bht:route-read (bht:get rec "route_id")))
+           (setq ent (bht:route-ent route))
+           (= (bht:get route "geometry_signature") (bht:route-geometry-signature ent
+                (if (bht:num (bht:get route "start_dist")) (bht:num (bht:get route "start_dist")) 0.0)
+                (if (= (bht:int (bht:get route "direction")) -1) -1 1)))
+           (setq index (if *bht-caption-points* *bht-caption-points* (bht:pt-all)))
+           (setq source (bht:obj-position rec index))
+           (setq source (cadr (bht:station-support rec index route source)))
+           (setq pr (bht:route-project route ent source))
+           (<= (cadr pr) (if (bht:num (bht:get route "max_offset")) (bht:num (bht:get route "max_offset")) 100.0)))
+    (progn
+      (setq cached (assoc (bht:get route "route_id") *bht-caption-controls*))
+      (if cached (setq controls (cdr cached))
+        (progn (setq controls (bht:route-controls route))
+          (if *bht-caption-index-active* (setq *bht-caption-controls* (cons (cons (bht:get route "route_id") controls) *bht-caption-controls*)))))
+      (if (and (null (cadr controls)) (car controls)
+               (bht:kh-caption-direction-clear-p (car controls) (car pr))
+               (setq km (bht:km-from-dist (car controls) (car pr) (bht:num (bht:get route "ngoai_suy_m")) (bht:int (bht:get route "chieu"))))
+               (bht:station-determined (car km)) (numberp (cadddr km)) (> (abs (cadddr km)) 1e-9)
+               (setq param (vlax-curve-getParamAtDist ent (nth 4 pr)))
+               (setq tangent (vlax-curve-getFirstDeriv ent param))
+               (> (+ (abs (car tangent)) (abs (cadr tangent))) 1e-9))
+        (progn
+          (setq dir (* (caddr km) (if (= (bht:int (bht:get route "direction")) -1) -1 1)))
+          (atan (* dir (cadr tangent)) (* dir (car tangent))))))))
+
+(defun bht:kh-caption-angle (base heading / right)
+  (if (numberp heading)
+    (progn (setq right (- heading (/ pi 2.0))) (+ right (bht:kh-readable-angle (- base right))))
+    (bht:kh-readable-angle base)))
+
+(defun bht:kh-caption-leader-layout (layout anchor / rec segments segment center count dx dy a rot rows h height width tb value normal extent selected candidate best heading)
   (setq rec *bht-caption-rec* h (cadr layout)
         segments (bht:kh-caption-segments (bht:get rec "object_id"))
         rows (if (= (bht:get rec "nhom") "BIEN_BAO") (max 1 (length (bht:kh-sign-codes rec)))
                  (if (= (bht:kh-label (bht:get rec "object_id") rec) "") 0 1)))
+  (setq heading (bht:kh-caption-route-angle rec))
   (if (/= (bht:get rec "ly_trinh_km") "") (setq rows (1+ rows)))
   (setq height (* h (+ 1.0 (* 1.5 (max 0 (1- rows))))) width 0.0)
   (foreach value (append (if (= (bht:get rec "nhom") "BIEN_BAO")
@@ -534,21 +583,21 @@
       (setq center '(0.0 0.0 0.0) count (length segments) dx 0.0 dy 0.0)
       (foreach segment segments
         (setq center (mapcar '+ center (mapcar '(lambda (x y) (/ (+ x y) 2.0)) (car segment) (cadr segment)))
-              a (angle (car segment) (cadr segment)) dx (+ dx (cos a)) dy (+ dy (sin a))))
+              a (atan (- (cadadr segment) (cadar segment)) (- (caadr segment) (caar segment))) dx (+ dx (cos a)) dy (+ dy (sin a))))
       (setq center (mapcar '(lambda (v) (/ v count)) center)
             a (if (< (+ (abs dx) (abs dy)) 1e-8) (angle (caar segments) (cadar segments)) (atan dy dx))))
     (setq center (car layout) a (+ (caddr anchor) (/ pi 2.0))))
-  (setq rot (bht:kh-readable-angle (+ a (if (= (bht:meta "sign_label_orientation" "PARALLEL") "PERPENDICULAR") (/ pi 2.0) 0.0))))
+  (setq rot (bht:kh-caption-angle (+ a (if (= (bht:meta "sign_label_orientation" "PARALLEL") "PERPENDICULAR") (/ pi 2.0) 0.0)) heading))
   (if (and segments (= (bht:get rec "nhom") "BIEN_BAO"))
     (progn
       ;; The upper leader is the common datum: codes above, chainage below.
-      (setq normal (+ (bht:kh-readable-angle a) (/ pi 2.0)) best nil)
+      (setq normal (+ rot (/ pi 2.0)) best nil)
       (foreach segment segments
         (setq candidate (mapcar '(lambda (x y) (/ (+ x y) 2.0)) (car segment) (cadr segment))
               extent (+ (* (car candidate) (cos normal)) (* (cadr candidate) (sin normal))))
         (if (or (null best) (> extent best)) (setq best extent center candidate selected segment)))
-      (setq a (angle (car selected) (cadr selected))
-            rot (bht:kh-readable-angle (+ a (if (= (bht:meta "sign_label_orientation" "PARALLEL") "PERPENDICULAR") (/ pi 2.0) 0.0)))
+      (setq a (atan (- (cadadr selected) (cadar selected)) (- (caadr selected) (caar selected)))
+            rot (bht:kh-caption-angle (+ a (if (= (bht:meta "sign_label_orientation" "PARALLEL") "PERPENDICULAR") (/ pi 2.0) 0.0)) heading)
             rows (max 1 (length (bht:kh-sign-codes rec))))
       (list (polar center (+ rot (/ pi 2.0)) (* h (+ 1.25 (* 1.5 (1- rows)))) ) h rot))
     (progn
@@ -600,7 +649,7 @@
               (setq found (list candidate))))))
       (if found (list (bht:label-local (car layout) (car found) 0.0 (caddr anchor)) h) layout))))
 
-(defun bht:kh-sign-label-layout (blk anchor / bounds sc rot pos center height y layout h rows rec)
+(defun bht:kh-sign-label-layout (blk anchor / bounds sc rot pos center height y layout h rows rec old)
   (setq sc (cadr anchor) rot (caddr anchor) pos (car anchor)
         bounds (if (bht:fn-defined-p 'BHTSIGNBOUNDS)
                  (vl-catch-all-apply 'BHTSIGNBOUNDS (list blk)) nil))
@@ -623,12 +672,19 @@
     (list (+ (car pos) (* sc (- (* center (cos rot)) (* y (sin rot)))))
           (+ (cadr pos) (* sc (+ (* center (sin rot)) (* y (cos rot))))) (caddr pos))
     h))
-  (if (or (bht:kh-fillable-p rec) (bht:kh-light-p rec))
+  (if (and (= (bht:get rec "nhom") "BIEN_BAO") (null (bht:kh-caption-route-angle rec)))
+    (progn
+      (setq *bht-caption-warnings* (bht:unique-add *bht-caption-warnings* (bht:get rec "object_id")))
+      (setq old (car (vl-remove-if 'bht:kh-extra-label-p
+        (vl-remove-if-not 'entget (cdr (assoc (bht:get rec "object_id") *bht-caption-texts*))))))
+      (if old (setq old (entget old)))))
+  (cond (old (list (cdr (assoc (if (= (cdr (assoc 72 old)) 1) 11 10) old)) h (cdr (assoc 50 old))))
+    ((or (bht:kh-fillable-p rec) (bht:kh-light-p rec))
     (bht:kh-caption-leader-layout layout anchor)
-    (append (bht:kh-caption-clear layout anchor) (list (bht:kh-readable-angle rot)))))
+    ) (T (append (bht:kh-caption-clear layout anchor) (list (bht:kh-readable-angle rot))))))
 (defun bht:sign-layers (/ e d)
   (bht:layer "BHT_KYHIEU" 7)
-  (if (and (setq e (tblobjname "LAYER" "BHT_KYHIEU")) (= (cdr (assoc 62 (setq d (entget e)))) 1))
+  (if (and (not *bht-scoped-correction*) (setq e (tblobjname "LAYER" "BHT_KYHIEU")) (= (cdr (assoc 62 (setq d (entget e)))) 1))
     (entmod (bht:dxf-put d 62 7))))
 
 (defun bht:kh-custom-key (group) (strcat "kh_block_" (strcase group T)))
@@ -1434,6 +1490,9 @@
                  (cons 1000 (bht:fnum (car pt) 6)) (cons 1000 (bht:fnum (cadr pt) 6))))
 )
 
+(defun bht:kh-text-angle-tag (nx rot)
+  (list -3 (append (cadr nx) (list (cons 1000 (strcat "ANGLE:" (rtos rot 2 10)))))))
+
 (defun bht:kh-extra-face-label-p (e / x)
   (setq x (bht:xget e "BHT_KH"))
   (and (>= (length x) 6) (= (nth 1 x) "NHAN") (wcmatch (nth 5 x) "FACE:*")))
@@ -1447,7 +1506,7 @@
 
 ;; Place chainage below all sign names in the title's local coordinate frame.
 ;; Ordinary TEXT stays editable and follows the existing move/scale/bounds code.
-(defun bht:kh-sync-station-label (oid rec blk anchor existing / old title value d h rot pt rows e nd nx removed item layout *bht-caption-rec*)
+(defun bht:kh-sync-station-label (oid rec blk anchor existing / old title value d h rot pt rows e nd nx removed item layout manual *bht-caption-rec*)
   (setq *bht-caption-rec* rec)
   (setq existing (vl-remove-if-not 'entget existing))
   (setq old (vl-remove-if-not 'bht:kh-station-label-p existing)
@@ -1463,6 +1522,7 @@
         (setq layout (bht:kh-sign-label-layout blk anchor) h (cadr layout)
               rot (caddr layout) pt (car layout)))
       (setq e (car old))
+      (setq manual (and e (eq (bht:kh-txt-state e nil) 'TAY)))
       (if (null e) (setq e (bht:text value pt h "BHT_NHAN")))
       (if e
         (progn
@@ -1471,11 +1531,12 @@
                 nd (bht:dxf-put nd 7 (bht:kh-label-style value))
                 nx (bht:kh-xdata-txt oid "TU_DONG" pt)
                 nx (list -3 (append (cadr nx) (list '(1000 . "STATION")))))
-          (if (not (bht:ent-same-p e d nd nx)) (progn (entmod (append nd (list nx))) (entupd e)))))))
+          (setq nx (bht:kh-text-angle-tag nx rot))
+          (if (and (not manual) (not (bht:ent-same-p e d nd nx))) (progn (entmod (append nd (list nx))) (entupd e)))))))
   (foreach item old (if (and (not (eq item e)) (entget item)) (progn (entdel item) (setq removed (1+ removed)))))
   removed)
 
-(defun bht:kh-sync-face-labels (oid rec blk anchor existing / code codes title h rot i lbl pt base e d nd nx used x tag old removed *bht-caption-rec*)
+(defun bht:kh-sync-face-labels (oid rec blk anchor existing / code codes title h rot i lbl pt base e d nd nx used x tag old removed manual *bht-caption-rec*)
   (setq *bht-caption-rec* rec)
   (setq old (vl-remove-if-not 'bht:kh-extra-face-label-p existing) removed 0)
   (setq title (car (vl-remove-if 'bht:kh-extra-label-p existing)))
@@ -1490,6 +1551,7 @@
               lbl (if (= code "") "Biển báo" (bht:kh-code-label "BIEN_BAO" code))
               pt (polar base (- rot (/ pi 2.0)) (* i h 1.5))
               e (car (vl-remove-if-not '(lambda (item) (= (nth 5 (bht:xget item "BHT_KH")) tag)) old)))
+        (setq manual (and e (eq (bht:kh-txt-state e nil) 'TAY)))
         (if (null e) (setq e (bht:text lbl pt h "BHT_NHAN")))
         (if e
           (progn
@@ -1498,7 +1560,8 @@
                   nd (bht:dxf-put nd 7 (bht:kh-label-style lbl))
                   nx (bht:kh-xdata-txt oid "TU_DONG" pt)
                   nx (list -3 (append (cadr nx) (list (cons 1000 tag)))))
-            (if (not (bht:ent-same-p e d nd nx)) (progn (entmod (append nd (list nx))) (entupd e)))
+            (setq nx (bht:kh-text-angle-tag nx rot))
+            (if (and (not manual) (not (bht:ent-same-p e d nd nx))) (progn (entmod (append nd (list nx))) (entupd e)))
             (setq used (cons e used))))
         (setq i (1+ i)))))
   (foreach e old (if (not (member e used)) (progn (entdel e) (setq removed (1+ removed)))))
@@ -1522,9 +1585,12 @@
 )
 
 ;; Trang thai nhan ky hieu: legacy-pos = vi tri 0.3.2 (theo ky hieu + ty le).
-(defun bht:kh-txt-state (e legacy-pos / d x pos)
+(defun bht:kh-txt-state (e legacy-pos / d x pos angle-tag)
   (setq d (entget e) x (bht:xget e "BHT_KH") pos (cdr (assoc (if (= (cdr (assoc 72 d)) 1) 11 10) d)))
+  (setq angle-tag (vl-some '(lambda (v) (if (wcmatch v "ANGLE:*") (bht:num (substr v 7)))) x))
   (cond
+    ((and angle-tag (> (abs (sin (- (cdr (assoc 50 d)) angle-tag))) 1e-7)) 'TAY)
+    ((and angle-tag (< (cos (- (cdr (assoc 50 d)) angle-tag)) 0.0)) 'TAY)
     ((and (>= (length x) 5) (= (nth 1 x) "NHAN"))
      (if (and (= (nth 2 x) "TU_DONG") (bht:pt-near pos (list (bht:num (nth 3 x)) (bht:num (nth 4 x))) *bht-lbl-tol*))
        'AUTO 'TAY))
@@ -1542,8 +1608,9 @@
 ;;  create nil = chi cap nhat ky hieu da co (khong tao moi).
 ;; Ky hieu mo coi (ho so da xoa) luon bi xoa. Tra ve assoc:
 ;;  created updated unchanged removed duplicates manual nopos total
-(defun bht:symbol-sync-ex (scope create / *bht-caption-rec* *bht-caption-leaders* *bht-caption-index-active* s h ins txt dan origins index oids rec pos blk g e d nd nx st anchor sc rot lpos heading
+(defun bht:symbol-sync-ex (scope create / *bht-caption-rec* *bht-caption-leaders* *bht-caption-index-active* *bht-caption-points* *bht-caption-controls* *bht-caption-texts* *bht-caption-warnings* s h ins txt dan origins index oids rec pos blk g e d nd nx st anchor sc rot lpos heading
                                        auto tr trot layout created updated same removed dup manual nopos all lbl ok)
+  (bht:require-working-drawing)
   (setq s (bht:kh-scale) h (bht:kh-h) created 0 updated 0 same 0 removed 0 dup 0 manual 0 nopos 0)
   (bht:sign-layers) (bht:layer "BHT_NHAN" 2) (bht:layer "BHT_DUONG_DAN" 6)
   (bht:regapp "BHT_KH")
@@ -1555,13 +1622,15 @@
         origins (bht:group-pairs (bht:tagged-pairs "INSERT" "BHT_SIGN_ORIGIN" 1))
         all (bht:obj-ids) index (bht:pt-all)
         oids (if scope (mapcar 'strcase scope) all))
-  (setq *bht-caption-leaders* dan *bht-caption-index-active* T)
+  (setq *bht-caption-leaders* dan *bht-caption-index-active* T *bht-caption-points* index *bht-caption-texts* txt)
   ;; ky hieu cua ho so da xoa
   (foreach gr (append ins txt dan origins)
-    (if (not (member (car gr) all))
+    (if (and (or (null scope) (member (car gr) oids)) (not (member (car gr) all)))
       (foreach e2 (cdr gr) (if (entget e2) (progn (entdel e2) (setq removed (1+ removed)))))))
   (foreach oid oids
     (setq rec (bht:obj-read oid) *bht-caption-rec* rec)
+    (if (= (bht:get rec "lifecycle") "RETIRED")
+      (setq removed (+ removed (bht:symbol-delete oid)) rec nil))
     (if rec
       (progn
         (setq pos (bht:obj-position rec index) blk (bht:kh-block rec) sc (bht:kh-scale-for rec)
@@ -1612,10 +1681,8 @@
         (setq dup (+ dup (bht:kh-origin-sync oid rec index anchor (cdr (assoc oid origins)))))
         ;; Leaders may have moved or just been created. Measure the current geometry,
         ;; not the index captured before placement (which made captions jump on refresh).
-        (setq *bht-caption-leaders* (cons (cons oid (mapcar 'cdr (vl-remove-if-not
-          '(lambda (pr) (= (car pr) oid)) (append (bht:tagged-pairs "LINE" "BHT_KH" 1)
-                                                (bht:tagged-pairs "LWPOLYLINE" "BHT_KH" 1)))))
-          (vl-remove-if '(lambda (pr) (= (car pr) oid)) *bht-caption-leaders*)))
+        ;; kh-leader-sync-source maintains the per-operation index, including new
+        ;; entities. Deleted entries are filtered by kh-caption-segments.
         ;; nhan ky hieu (theo vi tri ky hieu thuc te)
         (setq lbl (bht:kh-label oid rec))
         (if (= lbl "")
@@ -1642,7 +1709,7 @@
                       st (bht:kh-txt-state e (if pos (list (+ (car pos) (* 1.5 (bht:kh-scale))) (+ (cadr pos) (* 1.0 (bht:kh-scale)))) nil)))
                 (if (and anchor (or (eq st 'AUTO) (= (bht:get rec "nhom") "COC_TIEU")))
                   (setq nd (bht:dxf-put (bht:dxf-put (bht:dxf-put (bht:dxf-put (bht:dxf-put d 10 lpos) 1 (bht:cad-text lbl (bht:kh-label-style lbl))) 40 h) 8 "BHT_NHAN") 50 trot)
-                        nx (bht:kh-xdata-txt oid "TU_DONG" lpos))
+                        nx (bht:kh-text-angle-tag (bht:kh-xdata-txt oid "TU_DONG" lpos) trot))
                   (setq manual (1+ manual)
                         nd (bht:dxf-put (bht:dxf-put d 1 (bht:cad-text lbl (bht:kh-label-style lbl))) 40 h)
                         nx (bht:kh-xdata-txt oid "TAY" (cdr (assoc (if (= (cdr (assoc 72 d)) 1) 11 10) d)))))
@@ -1659,34 +1726,40 @@
                   (if anchor
                     (setq nd (bht:dxf-put (bht:dxf-put (bht:dxf-put (bht:dxf-put nd 10 lpos) 11 lpos) 72 1) 73 3)))
                   (entmod (append nd
-                                             (list (bht:kh-xdata-txt oid "TU_DONG" lpos)))) (entupd e))))))))))
+                                             (list (bht:kh-text-angle-tag (bht:kh-xdata-txt oid "TU_DONG" lpos) trot)))) (entupd e))))))))))
+  (setq ins (bht:tagged-pairs "INSERT" "BHT_KH" 1)
+        txt (bht:group-pairs (bht:tagged-pairs "TEXT" "BHT_KH" 1)))
   (foreach oid oids
     (setq rec (bht:obj-read oid))
     (if (and rec (bht:kh-fillable-p rec))
       (progn
-        (setq e (cdr (assoc oid (bht:tagged-pairs "INSERT" "BHT_KH" 1)))
+        (setq e (cdr (assoc oid ins))
               d (if e (entget e) nil)
               anchor (if d (list (cdr (assoc 10 d)) (abs (cdr (assoc 41 d))) (cdr (assoc 50 d))) nil)
               blk (if d (cdr (assoc 2 d)) "")
-              g (cdr (assoc oid (bht:group-pairs (bht:tagged-pairs "TEXT" "BHT_KH" 1)))))
+              g (cdr (assoc oid txt)))
         (if (= (bht:get rec "nhom") "BIEN_BAO") (setq dup (+ dup (bht:kh-sync-face-labels oid rec blk anchor g))))
         (setq dup (+ dup (bht:kh-sync-station-label oid (if anchor rec nil) blk anchor g))))))
   (foreach oid oids
     (if (= (bht:get (bht:obj-read oid) "nhom") "COC_TIEU") (bht:kh-marker-caption-sync oid)))
   (bht:kh-unify-layer oids)
   (bht:kh-labels-front)
+  (if *bht-caption-warnings* (bht:msg (strcat "Hướng nhãn chưa đủ bằng chứng chiều tăng Km; giữ bố trí nhãn đã có: "
+    (bht:join *bht-caption-warnings* ", ") ". Kiểm tra tim/mốc và áp dụng lại mẫu sau khi đối chiếu.")))
   (bht:log (strcat "Ký hiệu theo ID: tạo " (itoa created) ", cập nhật " (itoa updated) ", giữ " (itoa same)
                    ", xóa (hồ sơ đã xóa) " (itoa removed) ", xóa trùng " (itoa dup) ", vị trí tay giữ " (itoa manual)))
-  (list (cons 'created created) (cons 'updated updated) (cons 'unchanged same) (cons 'removed removed)
+  (append (if *bht-caption-warnings* (list (cons 'warning (strcat "Nhãn giữ hướng cũ do chưa đủ tim/mốc: " (bht:join *bht-caption-warnings* ", ")))))
+    (list (cons 'created created) (cons 'updated updated) (cons 'unchanged same) (cons 'removed removed)
         (cons 'duplicates dup) (cons 'manual manual) (cons 'nopos nopos)
-        (cons 'total (length (bht:tagged-pairs "INSERT" "BHT_KH" 1))))
+        (cons 'total (length (bht:tagged-pairs "INSERT" "BHT_KH" 1)))))
 )
 
 (defun bht:kh-labels-front ()
-  (if (bht:fn-defined-p 'BHTLABELFRONT) (BHTLABELFRONT)))
+  (if (and (not *bht-scoped-correction*) (bht:fn-defined-p 'BHTLABELFRONT)) (BHTLABELFRONT)))
 
 ;; A station update changes captions only: no placement, block rebuild or survey edits.
 (defun bht:kh-station-label-refresh (oids / ins texts pr oid rec e d anchor *bht-caption-leaders*)
+  (bht:require-working-drawing)
   (setq ins (bht:tagged-pairs "INSERT" "BHT_KH" 1)
         texts (bht:group-pairs (bht:tagged-pairs "TEXT" "BHT_KH" 1))
         *bht-caption-leaders* (bht:group-pairs (append (bht:tagged-pairs "LINE" "BHT_KH" 1)
@@ -1796,6 +1869,15 @@
                      (setq amount (+ amount deficit 0.0001) target (list (+ (car cp) (* amount (car n))) (+ (cadr cp) (* amount (cadr n))) (caddr base))))
                    (setq tries (1+ tries)))
                  (if (> deficit 1e-7) (setq reason "PL gấp khúc, chưa tìm được khoảng lùi an toàn"))))))))))
+  ;; This is a minimum clearance: repeating a layout must not pull it inward.
+  (if (and (null reason) target n
+       (>= (+ (* (- (car base) (car target)) (car n)) (* (- (cadr base) (cadr target)) (cadr n))) -1e-8)
+       (or *bht-road-straight*
+         (and (setq frame (bht:kh-road-frame *bht-road-ent* (mapcar '+ base center) *bht-road-dir*))
+           (> (* side (nth 2 frame)) 0.0)
+           (>= (cadr (bht:curve-project *bht-road-ent* (mapcar '+ base center)))
+             (+ (max *bht-road-left* *bht-road-right*) *bht-road-clearance* radius)))))
+    (setq target base))
   (if reason (progn (setq *bht-road-skips* (cons (strcat oid ": " reason) *bht-road-skips*)) nil) target))
 
 (defun bht:kh-road-apply (ent left right clearance direction mode / *bht-road-ent* *bht-road-left* *bht-road-right* *bht-road-clearance* *bht-road-dir* *bht-road-straight* *bht-road-skips* r reason)
@@ -1805,7 +1887,7 @@
     ((not (member direction '(1 -1))) (list 'LOI "Chọn đầu PL để xác định phía trái/phải."))
     ((not (vl-every '(lambda (v) (and v (<= 0.0 v 100000.0))) (list *bht-road-left* *bht-road-right* *bht-road-clearance*)))
      (list 'LOI "Nhập bề rộng hai bên và khoảng lùi từ 0 đến 100000 đơn vị bản vẽ."))
-    ((not (bht:fn-defined-p 'BHTDISPLAYBOUNDS)) (list 'LOI "Nạp Bridge BHT 1.0.30 trước khi bố trí ra ngoài đường."))
+    ((not (bht:fn-defined-p 'BHTDISPLAYBOUNDS)) (list 'LOI "Nạp Bridge BHT 1.1.5 trước khi bố trí ra ngoài đường."))
     (T (setq *bht-road-ent* ent *bht-road-dir* direction *bht-road-straight* (bht:kh-road-straight-p ent))
        (setq r (bht:kh-gap-apply-mode clearance mode))
        (if (and *bht-road-skips* (/= (car r) 'LOI))
@@ -1931,7 +2013,7 @@
       (bht:kh-marker-caption-sync oid)
       (if heading-angle 'OK 'NO_ROUTE))))
 
-(defun bht:kh-marker-place-all (/ index oid result placed missing skipped ids pair
+(defun bht:kh-marker-place-all (/ index oid result placed missing skipped ids pair rec source frame eligible
                                 *bht-marker-index-active* *bht-marker-inserts* *bht-marker-texts* *bht-marker-leaders* *bht-marker-locked*)
   (setq index (bht:pt-all) placed 0 missing nil skipped nil)
   ;; Index drawing entities once, instead of scanning Model space for every marker.
@@ -1944,7 +2026,12 @@
   (setq *bht-marker-index-active* T)
   (foreach pair *bht-marker-inserts* (setq ids (bht:unique-add ids (car pair))))
   (foreach oid ids
-    (if (= (bht:get (bht:obj-read oid) "nhom") "COC_TIEU")
+    (setq rec (bht:obj-read oid) eligible T)
+    (if (and (boundp '*bht-road-ent*) *bht-road-ent*)
+      (setq eligible (and (setq source (bht:obj-position rec index))
+        (setq frame (bht:kh-road-frame *bht-road-ent* source *bht-road-dir*)) (not (nth 4 frame))
+        (or (not *bht-center-route*) (= (bht:get rec "route_id") "") (= (bht:get rec "route_id") *bht-center-route*)))))
+    (if (and eligible (= (bht:get rec "nhom") "COC_TIEU"))
       (progn (setq result (bht:kh-marker-place-one oid index))
         (cond ((eq result 'SKIP) (setq skipped (cons oid skipped)))
               (T (setq placed (1+ placed)) (if (eq result 'NO_ROUTE) (setq missing (cons oid missing))))))))
@@ -1979,32 +2066,42 @@
   (if ids (bht:symbol-sync-ex ids nil)))
 
 ;; Captions may choose a new position after leaders change; remeasure the final display.
-(defun bht:kh-layout-clearance (ids index / pass changed oid e d rec source target labels frame normal delta)
+(defun bht:display-fail (message)
+  (setq *bht-display-failure* message)
+  (vl-exit-with-error message))
+
+(defun bht:kh-layout-clearance (ids index / pass changed pending inserts oid e d rec source target labels frame normal delta deficit)
   (if (and ids (boundp '*bht-road-ent*) *bht-road-ent*)
     (progn
-      (setq pass 0 changed ids)
-      (while (and changed (< pass 8))
+      (setq pass 0 pending ids inserts (bht:tagged-pairs "INSERT" "BHT_KH" 1))
+      (while (and pending (< pass 9))
         (setq changed nil pass (1+ pass)
               labels (bht:group-pairs (bht:tagged-pairs "TEXT" "BHT_KH" 1)))
-        (foreach oid ids
-          (setq e (cdr (assoc oid (bht:tagged-pairs "INSERT" "BHT_KH" 1))) d (entget e)
+        (foreach oid pending
+          (setq e (cdr (assoc oid inserts)) d (entget e)
                 rec (bht:obj-read oid) source (bht:obj-position rec index)
                 target (bht:kh-road-target oid rec index e (cdr (assoc oid labels)) source (cdr (assoc 10 d))))
-          (if (null target) (vl-exit-with-error "Không kiểm chứng được khoảng lùi sau khi dựng lại biển."))
+          (if (null target) (bht:display-fail (strcat oid ": không kiểm chứng được khoảng lùi sau khi dựng lại biển. " (car *bht-road-skips*))))
           (setq frame (bht:kh-road-frame *bht-road-ent* source *bht-road-dir*)
                 normal (mapcar '(lambda (x) (* (if (> (nth 2 frame) 0.0) 1.0 -1.0) x)) (cadr frame))
                 delta (mapcar '- target (cdr (assoc 10 d))))
-          (if (> (+ (* (car delta) (car normal)) (* (cadr delta) (cadr normal))) 1e-6)
+          (setq deficit (+ (* (car delta) (car normal)) (* (cadr delta) (cadr normal))))
+          (if (> deficit 1e-6)
             (progn
+              (if (= pass 9) (bht:display-fail (strcat oid ": nhãn/đường nối chưa ổn định; còn thiếu khoảng lùi " (bht:fnum deficit 6) " m. Kiểm tra nhãn chỉnh tay và điểm gấp khúc.")))
+              ;; A caption at a leader midpoint moves half as far as its INSERT.
+              ;; Compensate that response, then verify actual bounds again. The
+              ;; extra millimetre is outward clearance, never a relaxed tolerance.
+              (setq target (mapcar '+ (cdr (assoc 10 d)) (mapcar '(lambda (v) (* v (+ (* 2.0 deficit) 0.001))) normal)))
               (setq rec (bht:set (bht:set (bht:set rec "kh_free_x" (bht:fnum (car target) 8))
                                       "kh_free_y" (bht:fnum (cadr target) 8)) "kh_free_z" (bht:fnum (caddr target) 8)))
-              (bht:obj-write oid rec)
+              (if (not (bht:obj-write oid rec)) (bht:display-fail (strcat oid ": không lưu được khoảng lùi.")))
               (if (not (entmod (append (bht:dxf-put d 10 target)
                     (list (bht:kh-xdata-ins oid "TU_DONG" target (cdr (assoc 50 d)) (cdr (assoc 41 d)))))))
-                (vl-exit-with-error "Không hiệu chỉnh được khoảng lùi biển."))
+                (bht:display-fail (strcat oid ": không hiệu chỉnh được khoảng lùi biển.")))
               (entupd e) (setq changed (cons oid changed)))))
-        (bht:kh-layout-refresh changed))
-      (if changed (vl-exit-with-error "Nhãn biển chưa ổn định ở khoảng lùi đã chọn; đã hủy bố trí.")))))
+        (bht:kh-layout-refresh changed)
+        (setq pending changed)))))
 
 ;; Absolute display offset in drawing units; never modifies surveyed points.
 (defun bht:kh-gap-apply-write (value / gap index plans pr e d rec source base dx dy len ratio target via p oid result n skipped locked txt dan x delta nd anchor markers heading-angle orient missing original restored saved handles)
@@ -2120,7 +2217,8 @@
 (defun bht:kh-gap-apply-mode (value mode)
   (bht:kh-display-transaction 'bht:kh-display-write (list value mode)))
 
-(defun bht:kh-display-transaction (fn args / records meta entities pr d e original result failure-message)
+(defun bht:kh-display-transaction (fn args / records meta entities pr d e original result failure-message restored *bht-display-failure*)
+  (bht:require-working-drawing)
   (setq records (bht:rec-all "OBJ") meta (bht:rec-read "META" "CONFIG"))
   (foreach pr (append (bht:tagged-pairs "*" "BHT_KH" 1) (bht:tagged-pairs "INSERT" "BHT_SIGN_ORIGIN" 1) (bht:tagged-pairs "TEXT" "BHT_NHAN" 1))
     (setq entities (cons (entget (cdr pr) '("*")) entities)))
@@ -2129,12 +2227,19 @@
   (if (or (vl-catch-all-error-p result) (and (listp result) (eq (car result) 'LOI)))
     (progn
       (setq failure-message (bht:str (if (vl-catch-all-error-p result) (vl-catch-all-error-message result) (cadr result))))
+      (if *bht-display-failure* (setq failure-message *bht-display-failure*))
+      (if (= failure-message "") (setq failure-message (strcat "Lỗi khi chạy " (vl-princ-to-string fn) "; xem dòng lệnh F2 để đối chiếu.")))
       (foreach pr (append (bht:tagged-pairs "*" "BHT_KH" 1) (bht:tagged-pairs "INSERT" "BHT_SIGN_ORIGIN" 1) (bht:tagged-pairs "TEXT" "BHT_NHAN" 1))
         (if (not (member (cdr pr) original)) (entdel (cdr pr))))
       (foreach d entities (setq e (cdr (assoc -1 d))) (if (null (entget e)) (entdel e)) (entmod d) (entupd e))
-      (foreach pr records (bht:rec-write "OBJ" (car pr) (cdr pr)))
-      (if meta (bht:rec-write "META" "CONFIG" meta))
-      (list 'LOI (strcat "Không hoàn tất cập nhật; đã trả về trạng thái trước thao tác. " failure-message)))
+      (foreach pr records
+        (if (not (equal (cdr pr) (bht:obj-read (car pr)))) (bht:rec-write "OBJ" (car pr) (cdr pr))))
+      (if (not (equal meta (bht:rec-read "META" "CONFIG")))
+        (if meta (bht:rec-write "META" "CONFIG" meta) (bht:rec-delete "META" "CONFIG")))
+      (setq restored (and (equal records (bht:rec-all "OBJ")) (equal meta (bht:rec-read "META" "CONFIG"))
+        (vl-every '(lambda (d) (equal d (entget (cdr (assoc -1 d)) '("*")))) entities)))
+      (list 'LOI (strcat (if restored "Không hoàn tất cập nhật; đã đối chiếu và phục hồi hồ sơ, cấu hình, thực thể. "
+        "Phục hồi chưa đầy đủ. Không lưu đè bản vẽ; đóng bản thử và mở lại bản sao trước thao tác. ") failure-message)))
     result))
 
 (defun bht:kh-gap-apply (value) (bht:kh-gap-apply-mode value ""))
@@ -2148,14 +2253,15 @@
   (if oids (bht:symbol-sync-ex oids nil) nil)
 )
 
-(defun bht:kh-caption-template (oids / pr e d)
+(defun bht:kh-caption-template (oids / pr e d nx tag)
   (foreach pr (bht:tagged-pairs "TEXT" "BHT_KH" 1)
     (if (member (car pr) oids)
       (progn
         (setq e (cdr pr) d (entget e))
-        (if (not (bht:kh-extra-label-p e))
-          (if (not (entmod (append d (list (bht:kh-xdata-txt (car pr) "TU_DONG" (cdr (assoc 11 d)))))))
-            (vl-exit-with-error "Không cập nhật được nhãn; kiểm tra lớp bị khóa."))))))
+        (setq nx (bht:kh-xdata-txt (car pr) "TU_DONG" (cdr (assoc (if (= (cdr (assoc 72 d)) 1) 11 10) d))))
+        (if (bht:kh-extra-label-p e) (setq tag (nth 5 (bht:xget e "BHT_KH")) nx (list -3 (append (cadr nx) (list (cons 1000 tag))))))
+        (if (not (entmod (append d (list nx))))
+          (bht:display-fail "Không cập nhật được nhãn; kiểm tra lớp bị khóa.")))))
   (bht:kh-layout-refresh oids))
 
 (defun c:BHTMAUNHAN (/ *error* ss ids i x result)

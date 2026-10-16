@@ -1,0 +1,54 @@
+﻿PASS PROGRESS125 preview-selects-only-in-range-unfinished-object
+PASS PROGRESS125 preview-does-not-write
+PASS PROGRESS125 segment10-computed
+PASS PROGRESS125 outside-objects-unchanged
+PASS PROGRESS125 segment10-confirmed
+PASS PROGRESS125 segment11-computed-without-overwriting10
+PASS PROGRESS125 legacy-bulk-calculation-preserves-confirmed10
+PASS PROGRESS125 confirmed-station-cannot-be-overwritten
+PASS PROGRESS125 confirmed-segment-allows-empty-incremental-plan
+PASS PROGRESS125 reopen-preserves-number-unlocks-only-segment
+PASS PROGRESS125 both-segments-confirmed
+PASS PROGRESS125 confirmed-route-rename-blocked-before-creating-new-route
+PASS PROGRESS125 confirmed-route-delete-blocked-before-changing-objects
+PROGRESS125-LISP=13 FAIL=0
+PASS PROGRESS125 inherit-all-records-and-points
+PASS PROGRESS125 inherit-chainage-and-confirmation
+PASS PROGRESS125 station-label-survives-inheritance
+PASS PROGRESS125 repeat-import-is-idempotent
+PASS PROGRESS125 dotnet-blocks-changing-confirmed-result
+PASS PROGRESS125 saved-dwg-reopens-with-confirmed-station-and-label
+PASS PROGRESS125 segment-export-only-selected-record-and-point
+PASS PROGRESS125 segment-export-only-selected-label
+PASS PROGRESS125 segment-export-selected-table-and-route
+PASS PROGRESS125 route-name-collision-renamed-in-imported-object
+PASS PROGRESS125 115-layer-uses-final-renamed-route
+PASS PROGRESS125 local-active-route-and-imported-segment-preserved
+PASS PROGRESS125 local-presentation-handles-not-remapped-as-source
+PASS PROGRESS125 renamed-route-roundtrip-can-export
+PASS PROGRESS125 survey-import-clears-confirmation-with-station
+PASS PROGRESS125 inherit-confirmed-result-into-existing-survey
+PASS PROGRESS125 destination-annotation-preserved-on-upgrade
+PASS PROGRESS125 conflicting-confirmed-results-abort
+PASS PROGRESS125 coordinate-conflict-aborts
+PASS PROGRESS125 moved-confirmed-point-blocks-export
+PASS PROGRESS125 changed-confirmed-route-blocks-export
+PASS PROGRESS125 129-equivalent-content-import-idempotent
+PASS PROGRESS125 129-actual-accent-change-still-reported-readably
+PASS PROGRESS125 128-all-conflict-categories-collected
+PASS PROGRESS125 128-both-coordinate-axes-reported
+PASS PROGRESS125 128-repeated-faces-retained-in-report
+PASS PROGRESS125 128-full-rejection-preserves-records-and-geometry
+PASS PROGRESS125 128-report-current-incoming-direction
+PROGRESS125-DOTNET=28 FAIL=0
+PASS PROGRESS125: D:\lisp\BHT\sharing-0654\source\build\v1.1.5\progress125-1e804723027542e2a3b69c48af0af9b2
+PASS PROGRESS125 stage-import-keeps10-and-leaves11-pending"\nPASS PROGRESS125 stage-import-keeps10-and-leaves11-pending"
+PASS PROGRESS125 unused-source-route-does-not-duplicate-local11"\nPASS PROGRESS125 unused-source-route-does-not-duplicate-local11"
+PASS PROGRESS125 failed-calculation-restores-record-and-segment"\nPASS PROGRESS125 failed-calculation-restores-record-and-segment"
+PASS PROGRESS125 public-preview-cancel-preserves-data"\nPASS PROGRESS125 public-preview-cancel-preserves-data"
+PASS PROGRESS125 public-command-calculates-selected-segment"\nPASS PROGRESS125 public-command-calculates-selected-segment"
+PASS PROGRESS125 single-undo-restores-calculation-and-binding"\nPASS PROGRESS125 single-undo-restores-calculation-and-binding"
+PASS PROGRESS125 next-drawing-computes11-and-preserves10"\nPASS PROGRESS125 next-drawing-computes11-and-preserves10"
+PASS PROGRESS125 stage10-label-present-in-next-drawing
+PROGRESS125-STAGE=7 FAIL=0"\nPROGRESS125-STAGE=7 FAIL=0"
+PASS PROGRESS125 COMPLETE: D:\lisp\BHT\sharing-0654\source\build\v1.1.5\progress125-1e804723027542e2a3b69c48af0af9b2

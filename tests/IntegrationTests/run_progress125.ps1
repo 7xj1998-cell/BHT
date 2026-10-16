@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$BinDir,[string]$RuntimePath='',[string]$Drawing='',[string]$AcadProfile='BHTResearch111')
+﻿param([Parameter(Mandatory=$true)][string]$BinDir,[string]$RuntimePath='',[string]$Drawing='',[string]$AcadProfile='BHTResearch111')
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent (Split-Path -Parent $PSScriptRoot);$v=(Get-Content "$root\VERSION" -Raw).Trim()
 $out=Join-Path $root ("build\v$v\progress125-"+[guid]::NewGuid().ToString('N'));New-Item -ItemType Directory $out | Out-Null
@@ -10,8 +10,8 @@ function ProgressPath([string]$p){$p.Replace('\','/')}
 $boot=@('(setvar "SECURELOAD" 0)','_.NETLOAD',('"'+(ProgressPath "$out\BHT.Bridge.dll")+'"'),('(setq *bht-no-launch* T *bht-module-root* "'+(ProgressPath "$root\src\lisp")+'")'),('(load "'+(ProgressPath $RuntimePath)+'")'),'_.NETLOAD',('"'+(ProgressPath "$out\Progress125Probe.dll")+'"'))
 $lines=$boot+@(('(load "'+(ProgressPath "$PSScriptRoot\test_PROGRESS125.lsp")+'")'),'PROGRESS125PROBE','_.QUIT','_Y')
 [IO.File]::WriteAllLines("$out\test.scr",$lines,[Text.UTF8Encoding]::new($true))
-& 'D:\AutoCAD 2024\accoreconsole.exe' /p $AcadProfile /isolate BHTProgress125 "$out\profile" /s "$out\test.scr" /l en-US > "$out\console.log"
-$log=[IO.File]::ReadAllText("$out\console.log",[Text.Encoding]::Unicode)
+. "$root\scripts\coreconsole.ps1"
+$log=Invoke-BhtCoreConsole -Profile $AcadProfile -Script "$out\test.scr" -OutputDirectory $out
 $log -split "`n" | Where-Object {$_ -match '^(PASS|FAIL) PROGRESS125|^PROGRESS125-'} | Write-Output
 if($log -match '; error:|(?m)^FAIL PROGRESS125|PROGRESS125-ERROR' -or $log -notmatch 'PROGRESS125-LISP=\d+ FAIL=0' -or $log -notmatch 'PROGRESS125-DOTNET=\d+ FAIL=0'){throw "Progress125 failed: $out"}
 Write-Output "PASS PROGRESS125: $out"
@@ -35,8 +35,7 @@ $stage=$boot+@(('(load "'+(ProgressPath "$out\fixture.lsp")+'")'),'(p125-route "
  '(p125-check "next-drawing-computes11-and-preserves10" (and (equal p125-a (bht:obj-read "A10")) (bht:progress-locked (bht:obj-read "B11")) (= (bht:get (bht:obj-read "B11") "ly_trinh_m") "1150.000")))',
  'PROGRESS125STAGELABEL','(princ (strcat "\nPROGRESS125-STAGE=" (itoa p125-n) " FAIL=" (itoa p125-fail)))','_.QUIT','_Y')
 [IO.File]::WriteAllLines("$out\stage.scr",$stage,[Text.UTF8Encoding]::new($true))
-& 'D:\AutoCAD 2024\accoreconsole.exe' /p $AcadProfile /isolate BHTProgress125 "$out\profile" /s "$out\stage.scr" /l en-US > "$out\stage.log"
-$log=[IO.File]::ReadAllText("$out\stage.log",[Text.Encoding]::Unicode)
+$log=Invoke-BhtCoreConsole -Profile $AcadProfile -Script "$out\stage.scr" -OutputDirectory $out
 $log -split "`n" | Where-Object {$_ -match '^(PASS|FAIL) PROGRESS125|^PROGRESS125-'} | Write-Output
 if($log -match '; error:|(?m)^FAIL PROGRESS125' -or $log -notmatch 'PROGRESS125-STAGE=7 FAIL=0' -or $log -notmatch 'PASS PROGRESS125 stage10-label-present'){throw "Stage transfer failed: $out"}
 if($Drawing){
@@ -46,12 +45,11 @@ if($Drawing){
  if($LASTEXITCODE -ne 0){throw 'UI probe compile failed'}
  $ui=$boot+@('_.NETLOAD',('"'+(ProgressPath "$out\BHT.Palette.dll")+'"'),'_.NETLOAD',('"'+(ProgressPath "$out\Progress125UiProbe.dll")+'"'),'PROGRESS125UI','_.QUIT','_Y')
  [IO.File]::WriteAllLines("$out\ui.scr",$ui,[Text.UTF8Encoding]::new($true))
- & 'D:\AutoCAD 2024\accoreconsole.exe' /p $AcadProfile /isolate BHTProgress125 "$out\profile" /s "$out\ui.scr" /l en-US > "$out\ui.log"
+ $log=Invoke-BhtCoreConsole -Profile $AcadProfile -Script "$out\ui.scr" -OutputDirectory $out
  $uiReport=Get-Content "$out\progress-ui.txt" -Raw;Write-Output $uiReport;if($uiReport -notmatch 'PASS PROGRESS125 UI 10'){throw "UI failed: $out"}
  $real=$boot+@(('(load "'+(ProgressPath "$PSScriptRoot\test_PROGRESS125_REAL.lsp")+'")'),'_.QUIT','_Y')
  [IO.File]::WriteAllLines("$out\real.scr",$real,[Text.UTF8Encoding]::new($true))
- & 'D:\AutoCAD 2024\accoreconsole.exe' /p $AcadProfile /isolate BHTProgress125 "$out\profile" /i "$out\real-input.dwg" /s "$out\real.scr" /l en-US > "$out\real.log"
- $log=[IO.File]::ReadAllText("$out\real.log",[Text.Encoding]::Unicode)
+ $log=Invoke-BhtCoreConsole -Profile $AcadProfile -Script "$out\real.scr" -Drawing "$out\real-input.dwg" -OutputDirectory $out
  $log -split "`n" | Where-Object {$_ -match '^(PASS|FAIL) PROGRESS125|^PROGRESS125-|^REAL125'} | Write-Output
  if($log -match '; error:|(?m)^FAIL PROGRESS125' -or $log -notmatch 'PROGRESS125-REAL=8 FAIL=0'){throw "Real drawing failed: $out"}
 }

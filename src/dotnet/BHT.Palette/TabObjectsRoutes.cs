@@ -218,6 +218,9 @@ namespace BHT.Palette
             _deleteObjectButton=Btn("Xóa hồ sơ…",(s,e)=>DeleteCurrentObject());
             _objectTips.SetToolTip(_deleteObjectButton,"Xóa hồ sơ đang chọn cùng ký hiệu/nhãn/đường nối; giữ điểm RTK và ảnh gốc. Có xác nhận trước khi xóa.");
             f2.Controls.Add(_deleteObjectButton);
+            f2.Controls.Add(Btn("Hiệu chỉnh hồ sơ đã xác nhận…", (s,e)=>OpenObjectCorrection(false)));
+            f2.Controls.Add(Btn("Xem lịch sử…", (s,e)=>OpenObjectCorrection(true)));
+            f2.Controls.Add(Btn("Bố trí GLOBAL / LOCAL…", (s,e)=>OpenPresentationMode()));
             f2.Controls.Add(Btn("Thông tin hồ sơ", (s, e) =>
             {
                 if (_oIsNew || _oId.Text == "") return;
@@ -276,7 +279,7 @@ namespace BHT.Palette
                 if (!MatchesObjectIssue(r, _objIssue.SelectedIndex, pointIds)) continue;
                 if (!TextSearch.Match(new SurveyPoint { Id = kv.Key, Name = Groups.Label(r.Get(ObjFields.Group)), Description = r.Get(ObjFields.Code) + " " + r.Get(ObjFields.Desc) + " " + r.Get(ObjFields.Condition) }, query)) continue;
                 var it = new ListViewItem(new[] { kv.Key, Groups.Label(r.Get(ObjFields.Group)), r.Get(ObjFields.Code), r.Get(ObjFields.PoleCount),
-                    r.GetAll(ObjFields.Point).Count.ToString(), r.GetAll(ObjFields.Photo).Count.ToString(), r.Get(ObjFields.Condition) });
+                    r.GetAll(ObjFields.Point).Count.ToString(), r.GetAll(ObjFields.Photo).Count.ToString(), ObjectRevision.Retired(r)?"NGỪNG SỬ DỤNG":r.Get(ObjFields.Condition) });
                 it.Tag = kv.Key;
                 _objList.Items.Add(it);
                 it.Selected = kv.Key == keep;
@@ -510,7 +513,7 @@ namespace BHT.Palette
             if (_oPhotos.Items.Count == 0) _oPhotos.Items.Add("(chưa gắn ảnh — sang tab Ảnh để chọn và xác nhận gắn)");
             _storedChainage = r.Get(ObjFields.ChainageKm); _oChainage.Text = _storedChainage; UpdateMarkerStation();
             var km = new StringBuilder();
-            if (ProgressPolicy.Locked(r)) km.Append("ĐÃ XÁC NHẬN KẾT QUẢ ĐOẠN — mở lại đoạn trước khi sửa lý trình.\r\n");
+            if (ProgressPolicy.Locked(r)) km.Append("ĐÃ XÁC NHẬN — dùng Hiệu chỉnh hồ sơ đã xác nhận để sửa riêng đối tượng.\r\n");
             if (r.Get(ObjFields.ChainageKm) != "") km.Append(r.Get(ObjFields.ChainageKm)).Append(r.Get("station_source")=="FIELD_MARKERS" ? " (theo cọc)" : " offset "+r.Get(ObjFields.OffsetM)+" m "+r.Get(ObjFields.RouteSide));
             else km.Append("(chưa tính lý trình - ").Append(r.Get(ObjFields.KmState)).Append(")");
             km.Append("\r\nPhía đường đã nhập: ").Append(r.Get("phia_duong"));
@@ -979,6 +982,7 @@ namespace BHT.Palette
             var progress = RouteSection("QUẢN LÝ XỬ LÝ THEO ĐOẠN", "Kế thừa hồ sơ và lý trình đã tính. Chọn đoạn/tim, tính lý trình, xác nhận rồi xuất dữ liệu tích lũy sang bản vẽ tiếp theo.");
             AddRouteCommandButton(progress, "BHTNAPTICHLUY", "Nạp dữ liệu kế thừa (.bht)…", 365);
             AddRouteCommandButton(progress, "BHTXULYDOAN", "Xử lý theo đoạn / xuất dữ liệu…", 365);
+            progress.Controls.Add(Btn("Quản lý bình đồ / đồng bộ / phát hành…",(s,e)=>OpenDrawingProject()));
             f.Controls.Add(progress);
             var geometry = RouteSection("2. CHỌN TIM CỦA ĐOẠN", "Chọn loại Tim đường, Tim rãnh hoặc Tuyến khác trong hộp nạp tuyến. Sau đó xác định điểm đầu và chiều tăng lý trình.");
             var addRoute = new FlowLayoutPanel { AutoSize = true, Width = 365 };

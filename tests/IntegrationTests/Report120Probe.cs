@@ -22,7 +22,7 @@ public static class Report120Probe
     private static List<SignReportRow> Rows(Database db)
     {
         using (var service = new BhtDataService(db, () => "", false))
-            return SignReportRecords.Build(service.GetObjects(), "BHT 1.0.30", code =>
+            return SignReportRecords.Build(service.GetObjects(), "BHT 1.1.5", code =>
             {
                 var item = TdtSignLibrary.Find(code);
                 return item == null ? null : new SignReportRow { SignGroup = item.Group, Description = item.Description };

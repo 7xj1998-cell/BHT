@@ -1,5 +1,5 @@
 ﻿;;; ======================================================================
-;;; BHT-1.0.30.lsp - BHT 1.0.30 (build 2026-10-07)
+;;; BHT-1.1.5.lsp - BHT 1.1.5 (build 2026-10-07)
 ;;; Quan ly khao sat bao hieu / coc tieu / cot Km / bang va cong trinh ven
 ;;; tuyen: diem RTK, ho so doi tuong, anh TimeMark (KMZ), tuyen tham chieu,
 ;;; ly trinh, goi thau / doan tuyen, xuat CSV cho Excel.
@@ -30,14 +30,14 @@
 
 (vl-load-com)
 
-(setq *bht-version* "1.0.30")
+(setq *bht-version* "1.1.5")
 (setq *bht-build* "2026-10-07")
 
 ;; Luu duong dan ngay khi APPLOAD / Application Bundle nap Lisp. DLL dat canh
 ;; file Lisp de nguoi dung chi can APPLOAD mot lan, khong phai tu NETLOAD.
 ;; AutoLISP OR returns T, not the matching path.
-(setq *bht-lsp-file* (findfile "BHT-1.0.30.fas"))
-(if (null *bht-lsp-file*) (setq *bht-lsp-file* (findfile "BHT-1.0.30.lsp")))
+(setq *bht-lsp-file* (findfile "BHT-1.1.5.fas"))
+(if (null *bht-lsp-file*) (setq *bht-lsp-file* (findfile "BHT-1.1.5.lsp")))
 (if (and (not *bht-module-root*) (member (type BHTRUNTIMEROOT) '(SUBR USUBR EXRXSUBR))) (setq *bht-module-root* (BHTRUNTIMEROOT)))
 (setq *bht-lsp-dir*
   (if *bht-module-root* *bht-module-root* (if *bht-lsp-file* (vl-filename-directory *bht-lsp-file*))))
@@ -286,14 +286,16 @@
 
 (setq *bht-log-lines* nil)
 
-(setq *bht-screen-messages* nil)
+(setq *bht-screen-messages* nil *bht-screen-message-count* 0 *bht-screen-message-size* 0 *bht-screen-message-overflow* nil)
 
-;; Moi thong bao nghiep vu van hien o dong lenh va dong thoi duoc giu lai de
-;; Palette doc sau khi lenh ket thuc. Gioi han 40 dong de khong phinh bo nho.
+;; Constant-time capture; DRAIN owns the lifetime. Never silently discard stakes.
 (defun bht:screen-message-add (s)
-  (setq *bht-screen-messages* (cons (bht:str s) *bht-screen-messages*))
-  (if (> (length *bht-screen-messages*) 40)
-    (setq *bht-screen-messages* (reverse (cdr (reverse *bht-screen-messages*)))))
+  (if (null *bht-screen-messages*) (setq *bht-screen-message-count* 0 *bht-screen-message-size* 0))
+  (if (and (< *bht-screen-message-count* 20000) (< *bht-screen-message-size* 8000000))
+    (setq *bht-screen-messages* (cons (bht:str s) *bht-screen-messages*)
+          *bht-screen-message-count* (1+ *bht-screen-message-count*)
+          *bht-screen-message-size* (+ *bht-screen-message-size* (strlen (bht:str s))))
+    (setq *bht-screen-message-overflow* T))
   s
 )
 

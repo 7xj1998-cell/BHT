@@ -48,6 +48,52 @@ namespace BHT.Palette
             StyleChildren(dialog);
         }
 
+        // Tables need explicit cell colors: the green dialog ForeColor is otherwise
+        // inherited by cells drawn on a white background.
+        internal static void StyleGrid(DataGridView grid)
+        {
+            grid.BackgroundColor = Color.White;
+            grid.ForeColor = Color.FromArgb(24, 45, 39);
+            grid.EnableHeadersVisualStyles = false;
+            grid.BorderStyle = BorderStyle.FixedSingle;
+            grid.GridColor = Color.FromArgb(215, 225, 220);
+            grid.DefaultCellStyle.BackColor = Color.White;
+            grid.DefaultCellStyle.ForeColor = grid.ForeColor;
+            grid.DefaultCellStyle.SelectionBackColor = GreenDark;
+            grid.DefaultCellStyle.SelectionForeColor = Color.White;
+            grid.DefaultCellStyle.Padding = new Padding(5, 4, 5, 4);
+            grid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(242, 248, 245);
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(221, 239, 231);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = GreenDeep;
+            grid.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(221, 239, 231);
+            grid.ColumnHeadersDefaultCellStyle.SelectionForeColor = GreenDeep;
+            grid.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            grid.ColumnHeadersDefaultCellStyle.Padding = new Padding(6);
+            grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+        }
+
+        internal static void ApplyTableDialog(Form dialog)
+        {
+            ApplyDialog(dialog);
+            dialog.Font = new Font("Segoe UI", 10.5f);
+            dialog.BackColor = Color.FromArgb(245, 248, 246);
+            dialog.ForeColor = Color.FromArgb(24, 45, 39);
+            TableChildren(dialog);
+        }
+
+        static void TableChildren(Control parent)
+        {
+            foreach (Control c in parent.Controls)
+            {
+                if (c is DataGridView) { StyleGrid((DataGridView)c); continue; }
+                if (!(c is Button)) {
+                    c.ForeColor = Color.FromArgb(24, 45, 39);
+                    c.BackColor = c is TextBoxBase || c is ComboBox ? Color.White : parent.BackColor;
+                }
+                TableChildren(c);
+            }
+        }
+
         internal const int TabStripWidth = 64;
         internal const int TabHeight = 36;
 
@@ -115,6 +161,11 @@ namespace BHT.Palette
                     };
                     b.EnabledChanged += enabledStyle;
                     enabledStyle(b, EventArgs.Empty);
+                }
+                else if (c is DataGridView)
+                {
+                    StyleGrid((DataGridView)c);
+                    continue;
                 }
                 else if (c is ListView)
                 {

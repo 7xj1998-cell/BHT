@@ -146,9 +146,9 @@ namespace BHT.Core
 
     public static class BhtVersion
     {
-        public const string Version = "1.0.30";
-        public const string AssemblyVersion = "1.0.30.0";
-        public const string FileVersion = "1.0.30.0";
+        public const string Version = "1.1.5";
+        public const string AssemblyVersion = "1.1.5.0";
+        public const string FileVersion = "1.1.5.0";
         public const string LispApiLevel = "1";
         public const string DictName = "BHT_V02";
 

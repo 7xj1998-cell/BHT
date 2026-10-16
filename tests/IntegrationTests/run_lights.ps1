@@ -29,8 +29,8 @@ $lines=@('(setvar "SECURELOAD" 0)','_.NETLOAD',('"'+(LP "$BinDir\BHT.Bridge.dll"
 if($RuntimePath){$lines=@($lines | ForEach-Object {$_.Replace(("$root\src\lisp\BHT-$version.lsp").Replace('\','/'),$RuntimePath.Replace('\','/'))})}
 $scr=Join-Path $out 'lights.scr';[IO.File]::WriteAllLines($scr,$lines,[Text.UTF8Encoding]::new($true))
 $log=Join-Path $out 'lights.log'
-& "$AcadDir\accoreconsole.exe" /isolate BHTLights (Join-Path $out 'lights-test-profile') /s $scr /l en-US > $log
+. "$root\scripts\coreconsole.ps1"
+$console=Invoke-BhtCoreConsole -AcadDir $AcadDir -Script $scr -OutputDirectory (Join-Path $out 'lights-runtime')
 $report=Get-Content -LiteralPath (Join-Path $BinDir 'light-probe.txt');$report | ForEach-Object {Write-Host $_}
-$console=[IO.File]::ReadAllText($log,[Text.Encoding]::Unicode)
 if($report -match '^FAIL' -or $console -notmatch 'LIGHT-FAIL=0' -or $console -match '; error:|(?m)^FAIL LIGHT'){throw 'Light library integration failed'}
 Write-Host 'PASS light Lisp placement and direction'

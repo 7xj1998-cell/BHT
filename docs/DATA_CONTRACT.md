@@ -1,4 +1,12 @@
-﻿# BHT — HỢP ĐỒNG DỮ LIỆU DWG (0.4.6)
+﻿## Bổ sung hành vi 1.1.5
+
+Layer tim tham chiếu BHT = BHT_TUYEN_ + khóa ROUTE hợp lệ sau remap. Không dùng tên layer làm định danh hồ sơ; route_id/handle vẫn giữ vai trò hiện có. BHTROUTEWRITE ghi ROUTE và layer cùng transaction, qua progress-guard/BhtStore. ProjectTransfer áp dụng layer trong transaction nhập. Nút migration chỉ đổi Entity.LayerId, không sửa XRecord/XData/geometry/RTK/revision. Không đổi ZIP/schema và không chạy migration khi mở DWG. Chỉ chấp nhận native Curve đã biết; không sửa proxy/TDT gốc, block hoặc xref. Khác thuộc tính layer hoặc viewport thì chặn; không tự ghi đè. Layer cũ không bị xóa, undo phục hồi. Tên mã tuyến cũ không bị đổi hàng loạt.
+
+## Bổ sung hành vi 1.1.4
+
+Không đổi XRecord, ZIP .bht hoặc tự migration. Tim mở: phép chiếu tính lý trình phải nằm trong miền đầu/cuối theo tiếp tuyến XY; điểm vượt trả NGOAI_PHAM_VI_HINH_HOC / OUT_OF_RANGE, không có station thay thế. Tim kín giữ wrap. Gán tay không bỏ kiểm tra khoảng lý trình/phía đường khi tính/xác nhận. route_id của lần thử thất bại chỉ giữ dấu vết chẩn đoán, không đồng nghĩa doan. Hồ sơ khóa không tự tính lại khi nạp/mở. Hiệu chỉnh chỉ ghi sau preview hợp lệ và các chấp thuận riêng cần thiết; UI không đổi quyền ghi backend.
+
+# BHT — HỢP ĐỒNG DỮ LIỆU DWG (0.4.6)
 
 Tài liệu này mô tả **đúng định dạng mà mã Lisp (BHT-0.4.6.lsp) ghi vào bản vẽ**, lấy trực tiếp từ mã nguồn
 (`bht:rec-encode`, `bht:rec-decode`, `bht:rec-write`, `bht:pt-write-xdata`, `bht:obj-create`, `bht:photo-link`,
@@ -240,8 +248,50 @@ Chế độ hướng mới: `ROUTE_PERP` và `FIXED_PERP`. Tính hướng như R
 
 Các dòng tốc độ/giờ/mét/tải trọng trong bảng Nội dung biển vẫn lưu theo mã có hậu tố `-value` hoặc `@value`; thông tin cầu giữ trường hồ sơ cũ. Khóa dòng bắt đầu bằng @ chỉ dùng nội bộ giao diện, không ghi vào sign_content. Các trường attribute/TEXT khác vẫn dùng XML version 1 và khóa cũ, cập nhật mã mặt khi giá trị hậu tố thay đổi.
 
+## Bằng chứng xác nhận bổ sung 1.0.31
+
+Xác nhận mới ghi thêm hai trường scalar trong OBJ/XRecord hiện có. Không đổi cấu trúc ZIP .bht, không tự ghi lại hồ sơ cũ khi đọc hoặc bổ sung đối tượng khác.
+
+- `progress_context`: chuỗi AutoLISP chứa thông số tim, mốc hiệu lực (distance/station/observed) và phạm vi/phía đoạn. Không chứa handle bản vẽ; dùng để kiểm tra bổ sung trong Lisp.
+- `progress_route_state`: codec XRecord hiện có, nối các chuỗi đã encode bằng LF theo đúng thứ tự: loai, start_dist, direction, chieu, max_offset, ngoai_suy_m, route_revision, station_control_mode, station_source, rồi các giá trị moc lặp. C# `ProgressPolicy.RouteState` và Lisp `progress-route-state` dùng cùng định dạng.
+
+Hai trường trên là snapshot bằng chứng, chưa phải object_revision. Các trường progress_point, progress_route_signature, station_route_revision tiếp tục được đối chiếu với điểm/tim thực tế. Snapshot số NaN/Infinity không hợp lệ. Hồ sơ thiếu trường mới vẫn đọc được; việc bổ sung bị chặn khi dữ liệu cũ không đủ bằng chứng (đặc biệt mốc tự động). Không gán revision giả hoặc project_id/object_guid cho hồ sơ cũ.
+
+doan và goi vẫn được bảo vệ khi khóa. Chuẩn hóa tên gói khi nạp chỉ áp dụng bản ghi nguồn trong bộ nhớ nếu PackageAliasPolicy chứng minh cùng tập đoạn, tên gói, khoảng và phía; không coi đổi phân đoạn là đổi cách viết gói. Rollback để quay lại phần mềm trước dựa trên bản sao trước nâng cấp; chưa chứng minh mọi bản cũ giữ metadata mới sau khi chỉnh và lưu.
+
 ## Route maintenance 0.6.38
 
 `bht:api-route-select(id)` chọn tuyến cho lần gọi `bht:ask-route` kế tiếp trong tài liệu. Giá trị được lấy và xóa ngay khi hỏi tuyến.
 Đổi ID cập nhật `route_id` và `sign_heading_route` của hồ sơ; tăng revision. Sửa thuộc tính hoặc thay hình học xóa giá trị lý trình/offset/phía/loại đã tính, đặt `station_status=STALE` và `trang_thai_km=CAN_CAP_NHAT`.
 Thay hình học xóa mốc, reset điểm đầu/chiều và xóa metadata nguồn TDT. Xóa khai báo chuyển hồ sơ sang `NO_ROUTE`, xóa liên kết và dữ liệu lý trình. Hướng biển phụ thuộc tuyến chuyển sang FIXED với góc tương đương; không sửa INSERT/RTK/Polyline gốc trong thao tác xóa.
+
+## Bổ sung hợp đồng 1.0.32: hiệu chỉnh và lịch sử
+
+META/CONFIG.project_id được tạo khi đồng ý baseline đầu tiên. OBJ được chọn có object_guid, revision_id, parent_revision, object_revision, survey_revision, display_revision, assignment_revision, revision_status/reason/time/author/scope. object_id cũ giữ nguyên. HISTORY và CHANGES chỉ ghi thêm, CORRECTION/IN_FLIGHT là journal tạm. Snapshot binary v1 UTF-8/Base64 có SHA256, giữ nguyên các cặp khóa lặp và thứ tự. Baseline LEGACY_UNVERIFIED không giả lập xác minh lịch sử. Full export/import giữ lịch sử; rolling/survey-only có lịch sử bị chặn đến M3. Chi tiết migration, giới hạn và rollback: MILESTONE_2_ARCHITECTURE.md và old/HUONG_DAN_HIEU_CHINH_1.0.32.md.
+
+
+## 1.0.34: hợp nhất và tombstone
+
+RevisionMerge dùng project_id/object_guid/revision_id/parent_revision và snapshot để chứng minh tổ tiên. HISTORY trước hiệu chỉnh có before_pose; CAD_STATE/<object_id> lưu revision_id và pose sau cập nhật hình. Đây là bằng chứng bố trí, không phải tọa độ đo. So sánh bỏ prefix đổi tên lớp khi clone. Không chỉnh sửa snapshot lịch sử khi remap handle. lifecycle=RETIRED giữ bản ghi khóa, RTK và ancestry; ký hiệu không được nhập lại, báo cáo hiện hành loại hồ sơ. Không hỗ trợ phục hồi hoạt động trong bản này. Chặn ambiguity của legacy, gói/đoạn/tim và bố trí chưa có bằng chứng. ZIP .bht không đổi. Quay lại bản trước dùng DWG sao lưu trước nâng cấp.
+
+
+## 1.0.35-1.0.36: trình bày và bình đồ
+
+OBJ.presentation_pose giữ bằng chứng hình GLOBAL; Display Revision tăng độc lập. VIEW_LOCAL và LOCAL_HISTORY thuộc DWG; không xuất thành nguồn GLOBAL. DRAWING/CURRENT có drawing_id, project_id, name, state, parent_drawing và last_release. DRAWING_VIEWS giữ các đường dẫn DWG đã liên kết rõ ràng, không phát tán theo gói. RELEASES chỉ thêm, giữ hash tệp và danh sách object/revision/hash mỗi đoạn. Xuất dùng tên chưa tồn tại; lỗi thông thường phục hồi transaction và bỏ tệp vừa tạo. Nếu tiến trình bị ngắt giữa ghi tệp và ghi lịch sử, có thể còn tệp Rxx chưa được ghi nhận; không ghi đè tệp đó. Trạng thái bình đồ cần lưu DWG. Guard BHT không chặn lệnh CAD gốc như MOVE/SAVE.
+
+## 1.1.0: nhãn và xem trước không chặn CAD
+
+TEXT BHT_KH tự động có thể có thêm chuỗi 1000 `ANGLE:<radian>` sau các trường cũ, gồm tag FACE/STATION nếu có. Đây là góc tham chiếu để phát hiện ROTATE tay, không phải Survey Revision. Không chèn/xóa trường cũ hay tự nâng cấp toàn bộ khi đọc. `rtos` dùng 10 chữ số thập phân; không dùng hàm định dạng dựa trên số nguyên 32 bit cho góc này. Bản legacy không có ANGLE vẫn đọc được, nhưng không thể chứng minh lần xoay tay trước khi có metadata.
+
+Nhãn chọn nhánh 180 độ trong khung có chiều tăng Km hướng lên; tim và mốc tại điểm khảo sát xác định khung, độc lập UCS/VIEW. Mốc có hai hướng đối nghịch tại đúng vị trí điểm không cung cấp hướng duy nhất. Thiếu căn cứ: giữ góc/vị trí nhãn hiện có và cảnh báo; nhãn mới chỉ có hướng tạm. Chỉ cập nhật trình bày, giữ RTK/kết quả khóa. Bản cũ không được dùng để chỉnh rồi đồng bộ tiếp dữ liệu 1.1 khi chưa chứng minh giữ metadata mới; rollback dùng bản BEFORE.
+
+`*bht-progress-pending*` là trạng thái tạm trong namespace tài liệu, không ghi DWG. `@PLAN:<token>` gửi cùng danh sách xem trước qua BHTPROGRESSPREVIEW. Áp dụng gọi API đã đăng ký, kiểm tra lại toàn phương án và tiêu thụ token một lần; chuyển DWG bị chặn, đóng DWG đóng bảng. Báo cáo là snapshot đọc, không tự cập nhật theo thay đổi CAD.
+
+Bộ đệm thông báo giới hạn 20.000 mục/8 triệu ký tự; vượt ngưỡng có thông báo rõ, không xóa âm thầm các dòng đầu. DRAIN/CLEAR xóa cả thông báo và bộ đếm. Không đổi ZIP .bht hoặc quy tắc tổ tiên revision.
+
+
+## 1.1.3: nhật ký gom SEG không tham chiếu
+
+SEG_ALIAS là dictionary con BHT_V02, XRecord cùng codec hiện có. Bản ghi format=BHT_SEG_ALIAS/1 gồm removed_id, kept_id, removed_record, kept_record, reason. Hai record là ObjectRevision.Snapshot đầy đủ; khóa là hash nội dung journal. Chỉ ghi thêm, không đổi/xóa, guard C# và Lisp thống nhất. Nạp toàn dự án/kế thừa giữ journal theo codec chung; xuất riêng đoạn không mang toàn bộ nhật ký gom của các đoạn khác. Không dùng journal làm revision hoặc bằng chứng định danh dự án.
+
+Gom chỉ sau preview/confirm, đúng Database và stamp toàn kho không đổi. Cùng phạm vi/phía/tên gói/cách viết mã; dòng bỏ không tham chiếu, không mất tim. HISTORY/CHANGES/LOCAL_HISTORY/RELEASES hiện có chặn gom bảo thủ. Transaction/Undo, không ghi OBJ/RTK/ROUTE/CAD, không tự migration khi đọc. Source .bht giữ nguyên; ZIP không đổi. Rollback bằng Undo hoặc bản DWG trước gom; không sửa bằng bản cũ rồi đồng bộ tiếp.

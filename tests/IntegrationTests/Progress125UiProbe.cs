@@ -1,4 +1,4 @@
-using System;using System.IO;using System.Linq;using System.Collections.Generic;using System.Drawing;using System.Windows.Forms;
+﻿using System;using System.IO;using System.Linq;using System.Collections.Generic;using System.Drawing;using System.Windows.Forms;
 using Autodesk.AutoCAD.DatabaseServices;using Autodesk.AutoCAD.Runtime;using BHT.Core;using BHT.Bridge;using BHT.Palette;
 public class Progress125UiProbe
 {
@@ -12,7 +12,7 @@ public class Progress125UiProbe
    using(var bitmap=new Bitmap(form.Width,form.Height)){form.DrawToBitmap(bitmap,new Rectangle(0,0,form.Width,form.Height));bitmap.Save(Path.Combine(dir,"xu-ly-theo-doan.png"));}
    Button(form,"Tính lý trình theo đoạn").PerformClick();Check("exact-selection-result",form.Result.SequenceEqual(new[]{"CALCULATE","DOAN_10","TIMRANHD10"}));}
   foreach(var r in objects.Where(r=>r.Get("doan")=="DOAN_10"))r.Set("progress_locked","1");
-  using(var form=new ProgressForm(segs,objects,routes)){Show(form);var grid=All(form).OfType<DataGridView>().Single();grid.Rows.Cast<DataGridViewRow>().Single(r=>Convert.ToString(r.Cells[0].Value)=="DOAN_10").Selected=true;Check("confirmed-disables-recalculation",!Button(form,"Tính lý trình theo đoạn").Enabled);Check("confirmed-enables-reopen-and-export",Button(form,"Mở lại kết quả đoạn").Enabled&&Button(form,"Xuất hồ sơ đoạn (.bht)…").Enabled);string selected="";form.ExportRequested=s=>selected=s;Button(form,"Xuất hồ sơ đoạn (.bht)…").PerformClick();Check("export-selects-only-current-segment",selected=="DOAN_10");Button(form,"Xuất dữ liệu tích lũy (.bht)…").PerformClick();Check("cumulative-export-all",selected==null);Button(form,"Đóng").PerformClick();Check("close-without-data-action",form.Result==null);}
+  using(var form=new ProgressForm(segs,objects,routes)){Show(form);var grid=All(form).OfType<DataGridView>().Single();grid.Rows.Cast<DataGridViewRow>().Single(r=>Convert.ToString(r.Cells[0].Value)=="DOAN_10").Selected=true;All(form).OfType<ComboBox>().Single().SelectedItem=segs.Single(r=>r.Get("segment_id")=="DOAN_10").Get("route_id");Check("confirmed-allows-incremental-only-on-bound-route",Button(form,"Tính lý trình theo đoạn").Enabled==(All(form).OfType<ComboBox>().Single().SelectedIndex>=0));Check("confirmed-enables-reopen-and-export",Button(form,"Mở lại kết quả đoạn").Enabled&&Button(form,"Xuất hồ sơ đoạn (.bht)…").Enabled);string selected="";form.ExportRequested=s=>selected=s;Button(form,"Xuất hồ sơ đoạn (.bht)…").PerformClick();Check("export-selects-only-current-segment",selected=="DOAN_10");Button(form,"Xuất dữ liệu tích lũy (.bht)…").PerformClick();Check("cumulative-export-all",selected==null);Button(form,"Đóng").PerformClick();Check("close-without-data-action",form.Result==null);}
   File.WriteAllText(Path.Combine(dir,"progress-ui.txt"),"PASS PROGRESS125 UI "+count);
  }catch(System.Exception ex){File.WriteAllText(Path.Combine(dir,"progress-ui.txt"),"FAIL "+ex);}}
 }

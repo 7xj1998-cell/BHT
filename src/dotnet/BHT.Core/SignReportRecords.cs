@@ -9,6 +9,7 @@ namespace BHT.Core
     {
         public static bool Includes(BhtRecord record)
         {
+            if (ObjectRevision.Retired(record)) return false;
             string group = record.Get(ObjFields.Group).Trim().ToUpperInvariant();
             return new[] { "BIEN_BAO", "BANG_CHI_DAN", "BANG_QC", "KHAC", "CHUA_XAC_DINH" }.Contains(group);
         }

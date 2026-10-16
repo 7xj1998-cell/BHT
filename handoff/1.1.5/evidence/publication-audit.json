@@ -1,0 +1,12 @@
+{
+  "stagedFiles": 1141,
+  "verifiedSourceFiles": 858,
+  "issues": [],
+  "checks": [
+    "staged SHA256 vs development source",
+    "no survey package/drawing/photo",
+    "only reviewed symbol assets",
+    "credential patterns",
+    "no compiled binaries"
+  ]
+}

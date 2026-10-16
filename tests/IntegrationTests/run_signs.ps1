@@ -99,11 +99,9 @@ $scr = Join-Path $out 'run.scr'
 $utf8Bom = New-Object System.Text.UTF8Encoding($true)
 [IO.File]::WriteAllLines($scr, $lines, $utf8Bom)
 $log = Join-Path $out 'console-raw.txt'
-# Separate test profile prevents installed TDT startup reactors/menu scripts entering the test process.
-$isolation = Join-Path $out 'coreconsole-profile'
-New-Item -ItemType Directory -Force -Path $isolation | Out-Null
-& "$AcadDir\accoreconsole.exe" /isolate BHTSignTests $isolation /p "<<Unnamed Profile>>" /s $scr /l en-US > $log
-$console = [IO.File]::ReadAllText($log).Replace([string][char]0, '')
+# Bound the process lifetime and close only crash reporters from this test.
+. "$root\scripts\coreconsole.ps1"
+$console = Invoke-BhtCoreConsole -AcadDir $AcadDir -Script $scr -OutputDirectory (Join-Path $out 'signs-runtime') -TimeoutSeconds 300
 if ($console -notmatch 'SUPPORT-TEST-COMPLETED') { throw 'Support/RTK leader tests did not complete' }
 if ($console -notmatch 'ORIGIN-TEST-COMPLETED') { throw 'Sign origin tests did not complete' }
 if ($console -notmatch 'UPGRADE-TEST-COMPLETED' -or !(Test-Path -LiteralPath $upgradeResult) -or [IO.File]::ReadAllText($upgradeResult).Contains('FAIL ')) { throw 'Startup upgrade/delete tests failed or did not complete' }
